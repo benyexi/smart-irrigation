@@ -21,6 +21,7 @@ export interface WeatherData {
   windSpeed: number;
   radiation: number;
   rainfall: number;
+  et0: number;
   updatedAt: string;
 }
 
@@ -120,6 +121,7 @@ export const mockWeather: WeatherData = {
   windSpeed: 2.1,
   radiation: 524,
   rainfall: 0.0,
+  et0: 3.8,
   updatedAt: '2024-04-07 10:30:00',
 };
 
@@ -403,3 +405,50 @@ export const mockSoils: SoilInfo[] = [
   { id: 4, type: '粘壤土', fieldCapacity: 32, wiltingPoint: 18, saturation: 50, bulkDensity: 1.30 },
   { id: 5, type: '粘土', fieldCapacity: 40, wiltingPoint: 25, saturation: 55, bulkDensity: 1.20 },
 ];
+
+// ─── Map Sites ────────────────────────────────────────────────────────────────
+
+export interface MapSite {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  status: 'irrigating' | 'standby' | 'alarm' | 'offline';
+  plantType: string;
+  sapFlowRate: number;
+  soilMoisture: number;
+  area: number;
+}
+
+export const mockMapSites: MapSite[] = [
+  { id: 'ms001', name: '北京大兴苹果园 A区', lat: 39.726, lng: 116.341, status: 'irrigating', plantType: '苹果', sapFlowRate: 138.5, soilMoisture: 28.4, area: 50 },
+  { id: 'ms002', name: '河北廊坊毛白杨林地', lat: 39.538, lng: 116.683, status: 'standby', plantType: '毛白杨', sapFlowRate: 95.2, soilMoisture: 32.1, area: 200 },
+  { id: 'ms003', name: '山东聊城玉米试验田', lat: 36.456, lng: 115.985, status: 'alarm', plantType: '玉米', sapFlowRate: 42.3, soilMoisture: 18.6, area: 30 },
+  { id: 'ms004', name: '山西运城葡萄园', lat: 35.022, lng: 111.003, status: 'irrigating', plantType: '葡萄', sapFlowRate: 112.7, soilMoisture: 25.8, area: 80 },
+  { id: 'ms005', name: '河北保定小麦示范区', lat: 38.873, lng: 115.464, status: 'standby', plantType: '小麦', sapFlowRate: 78.4, soilMoisture: 35.2, area: 120 },
+  { id: 'ms006', name: '北京顺义梨园', lat: 40.128, lng: 116.654, status: 'offline', plantType: '梨', sapFlowRate: 0, soilMoisture: 22.1, area: 40 },
+];
+
+// ─── Extended history data (multi-depth) ─────────────────────────────────────
+const sine2 = (i: number, base: number, amp: number, period: number) =>
+  +(base + amp * Math.sin((i / period) * Math.PI * 2) + (Math.random() - 0.5) * 1.2).toFixed(2);
+export const mockHistoryData = {
+  soil_moisture_20cm: mockHistoryTimestamps.map((_: string, i: number) => sine2(i, 32, 5, 48)),
+  soil_moisture_40cm: mockHistoryTimestamps.map((_: string, i: number) => sine2(i, 28, 5, 48)),
+  soil_moisture_60cm: mockHistoryTimestamps.map((_: string, i: number) => sine2(i, 25, 4, 48)),
+  soil_moisture_80cm: mockHistoryTimestamps.map((_: string, i: number) => sine2(i, 23, 3, 48)),
+  soil_moisture_100cm: mockHistoryTimestamps.map((_: string, i: number) => sine2(i, 21, 3, 48)),
+  soil_potential_40cm: mockHistoryTimestamps.map((_: string, i: number) => sine2(i, -55, 25, 48)),
+  sap_flow_rate: mockHistoryTimestamps.map((_: string, i: number) => Math.max(0, sine2(i, 100, 80, 24))),
+  stem_diameter_variation: mockHistoryTimestamps.map((_: string, i: number) => sine2(i, 0, 0.4, 24)),
+  temperature: mockHistoryTimestamps.map((_: string, i: number) => sine2(i, 22, 8, 24)),
+  rainfall: mockHistoryTimestamps.map(() => (Math.random() > 0.95 ? +(Math.random() * 8).toFixed(1) : 0)),
+};
+
+// ─── Dashboard aggregated data ────────────────────────────────────────────────
+export const mockDashboard = {
+  weather: { temperature: 24.6, humidity: 62.3, windSpeed: 2.1, radiation: 524, rainfall: 0.0, et0: 3.8 },
+  plantPhysiology: { sapFlowRate: 138.5, stemDiameterVariation: -0.12, leafTurgorPressure: 0.68 },
+  soilMoisture: { depth20: 32.1, depth40: 28.4, depth60: 25.2, depth80: 23.1, depth100: 21.5 },
+  irrigationToday: { volume: 142.6, duration: 95, status: 'completed' },
+};

@@ -1,183 +1,134 @@
-// Dashboard page — site overview with weather, physiology, soil moisture chart, irrigation comparison
 import React, { useState } from 'react';
-import {
-  Row, Col, Card, Select, Statistic, Tag, Typography, Space, Badge,
-} from 'antd';
-import {
-  ThunderboltOutlined, CloudOutlined, DashboardOutlined,
-  DropboxOutlined, ExperimentOutlined,
-} from '@ant-design/icons';
+import { Row, Col, Card, Select, Tag, Typography } from 'antd';
+import { ArrowUpOutlined, ArrowDownOutlined, AlertOutlined, ThunderboltOutlined, DropboxOutlined, DashboardOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
-import {
-  mockSites, mockWeather, mockPhysiology,
-  mockSoilMoisture, mockIrrigationComparison,
-} from '../../mock';
+import { mockSites, mockDashboard, mockHistoryData, mockHistoryTimestamps } from '../../mock';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
-// Color palette for soil depth lines
-const depthColors = ['#52c41a', '#1890ff', '#fa8c16', '#722ed1', '#eb2f96'];
+const statCards = [
+  { label: '今日灌溉量', value: '142.6', unit: 'm³', trend: '+8%', up: true, cls: 'gradient-card-green', icon: <DropboxOutlined style={{ fontSize: 22, color: '#00d4aa' }} /> },
+  { label: '当前液流速率', value: '138.5', unit: 'g/h', trend: '+12%', up: true, cls: 'gradient-card-blue', icon: <ThunderboltOutlined style={{ fontSize: 22, color: '#4f9cf9' }} /> },
+  { label: '土壤平均含水率', value: '28.4', unit: '%', trend: '-3%', up: false, cls: 'gradient-card-orange', icon: <DashboardOutlined style={{ fontSize: 22, color: '#ff6b35' }} /> },
+  { label: '活跃报警数', value: '3', unit: '条', trend: '+1', up: true, cls: 'gradient-card-red', icon: <AlertOutlined style={{ fontSize: 22, color: '#ff4757' }} /> },
+];
+
+const soilChartOption = {
+  backgroundColor: 'transparent',
+  grid: { top: 32, right: 16, bottom: 40, left: 48 },
+  tooltip: { trigger: 'axis', backgroundColor: 'rgba(20,23,32,0.95)', borderColor: '#2a2d3e', textStyle: { color: '#e8eaf0' } },
+  legend: { data: ['20cm','40cm','60cm','80cm','100cm'], textStyle: { color: '#8892a4' }, bottom: 0 },
+  xAxis: { type: 'category', data: mockHistoryTimestamps.slice(-24).map((t: string) => t.slice(11,16)), axisLine: { lineStyle: { color: '#2a2d3e' } }, axisTick: { show: false }, axisLabel: { color: '#8892a4', fontSize: 11 }, splitLine: { show: false } },
+  yAxis: { type: 'value', name: '含水率(%)', nameTextStyle: { color: '#8892a4', fontSize: 11 }, axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: '#8892a4', fontSize: 11 }, splitLine: { lineStyle: { color: '#2a2d3e', type: 'dashed' } } },
+  series: [
+    { name: '20cm', type: 'line', smooth: true, data: mockHistoryData.soil_moisture_20cm.slice(-24), lineStyle: { color: '#00d4aa', width: 2 }, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(0,212,170,0.25)' }, { offset: 1, color: 'rgba(0,212,170,0.02)' }] } }, symbol: 'none' },
+    { name: '40cm', type: 'line', smooth: true, data: mockHistoryData.soil_moisture_40cm.slice(-24), lineStyle: { color: '#4f9cf9', width: 2 }, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(79,156,249,0.2)' }, { offset: 1, color: 'rgba(79,156,249,0.02)' }] } }, symbol: 'none' },
+    { name: '60cm', type: 'line', smooth: true, data: mockHistoryData.soil_moisture_60cm.slice(-24), lineStyle: { color: '#ff6b35', width: 2 }, symbol: 'none' },
+    { name: '80cm', type: 'line', smooth: true, data: mockHistoryData.soil_moisture_80cm.slice(-24), lineStyle: { color: '#ffd32a', width: 2 }, symbol: 'none' },
+    { name: '100cm', type: 'line', smooth: true, data: mockHistoryData.soil_moisture_100cm.slice(-24), lineStyle: { color: '#a55eea', width: 2 }, symbol: 'none' },
+  ],
+};
+
+const makeGauge = (value: number, max: number, name: string, color: string) => ({
+  backgroundColor: 'transparent',
+  series: [{ type: 'gauge', startAngle: 200, endAngle: -20, min: 0, max, radius: '90%', pointer: { show: true, length: '60%', width: 4, itemStyle: { color } }, axisLine: { lineStyle: { width: 10, color: [[value/max, color],[1,'#2a2d3e']] } }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false }, detail: { valueAnimation: true, formatter: '{value}', color, fontSize: 20, fontWeight: 700, offsetCenter: [0,'30%'] }, title: { offsetCenter: [0,'60%'], color: '#8892a4', fontSize: 12 }, data: [{ value, name }] }],
+});
+
+const barChartOption = {
+  backgroundColor: 'transparent',
+  grid: { top: 24, right: 16, bottom: 40, left: 48 },
+  tooltip: { trigger: 'axis', backgroundColor: 'rgba(20,23,32,0.95)', borderColor: '#2a2d3e', textStyle: { color: '#e8eaf0' } },
+  legend: { data: ['计划灌水量','实际灌水量'], textStyle: { color: '#8892a4' }, bottom: 0 },
+  xAxis: { type: 'category', data: ['03-31','04-01','04-02','04-03','04-04','04-05','04-06'], axisLine: { lineStyle: { color: '#2a2d3e' } }, axisTick: { show: false }, axisLabel: { color: '#8892a4', fontSize: 11 } },
+  yAxis: { type: 'value', name: '水量(m³)', nameTextStyle: { color: '#8892a4', fontSize: 11 }, axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: '#8892a4', fontSize: 11 }, splitLine: { lineStyle: { color: '#2a2d3e', type: 'dashed' } } },
+  series: [
+    { name: '计划灌水量', type: 'bar', data: [45,50,38,52,0,55,48], barMaxWidth: 20, itemStyle: { color: 'rgba(79,156,249,0.7)', borderRadius: [4,4,0,0] } },
+    { name: '实际灌水量', type: 'bar', data: [42,48,40,50,0,53,46], barMaxWidth: 20, itemStyle: { color: 'rgba(0,212,170,0.8)', borderRadius: [4,4,0,0] } },
+  ],
+};
 
 const Dashboard: React.FC = () => {
-  const [siteId, setSiteId] = useState('site001');
-
-  // ── Soil moisture ECharts option ──
-  const soilOption = {
-    tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
-    legend: { data: mockSoilMoisture.series.map((s) => s.name), bottom: 0 },
-    grid: { left: 50, right: 20, top: 20, bottom: 40 },
-    xAxis: {
-      type: 'category',
-      data: mockSoilMoisture.xAxis,
-      axisLabel: { fontSize: 11 },
-    },
-    yAxis: {
-      type: 'value',
-      name: '含水率 (%)',
-      min: 15,
-      max: 40,
-      axisLabel: { fontSize: 11 },
-    },
-    series: mockSoilMoisture.series.map((s, i) => ({
-      name: s.name,
-      type: 'line',
-      data: s.data,
-      smooth: true,
-      symbol: 'none',
-      lineStyle: { width: 2, color: depthColors[i] },
-      areaStyle: { color: depthColors[i], opacity: 0.06 },
-    })),
-  };
-
-  // ── Irrigation comparison ECharts option ──
-  const irrigationOption = {
-    tooltip: { trigger: 'axis' },
-    legend: { data: ['计划灌水量', '实际灌水量'], bottom: 0 },
-    grid: { left: 50, right: 20, top: 20, bottom: 40 },
-    xAxis: { type: 'category', data: mockIrrigationComparison.xAxis },
-    yAxis: { type: 'value', name: '灌水量 (m³)' },
-    series: [
-      {
-        name: '计划灌水量',
-        type: 'bar',
-        data: mockIrrigationComparison.plan,
-        itemStyle: { color: '#91d5ff' },
-        barGap: '10%',
-      },
-      {
-        name: '实际灌水量',
-        type: 'bar',
-        data: mockIrrigationComparison.actual,
-        itemStyle: { color: '#52c41a' },
-      },
-    ],
-  };
+  const [selectedSite, setSelectedSite] = useState(mockSites[0].id);
+  const site = mockSites.find(s => s.id === selectedSite) ?? mockSites[0];
+  const dash = mockDashboard;
 
   return (
     <div className="page-container">
-      {/* ── Top bar ── */}
-      <Row gutter={[16, 16]} align="middle" style={{ marginBottom: 16 }}>
-        <Col>
-          <Title level={4} style={{ margin: 0 }}>主控看板</Title>
-        </Col>
-        <Col>
-          <Select
-            value={siteId}
-            onChange={setSiteId}
-            style={{ width: 220 }}
-            options={mockSites.map((s) => ({ value: s.id, label: s.name }))}
-          />
-        </Col>
-        <Col flex="auto" />
-        <Col>
-          <Badge count={3} offset={[4, 0]}>
-            <Tag color="red" style={{ cursor: 'pointer', fontSize: 13 }}>
-              ⚠ 未处理报警
-            </Tag>
-          </Badge>
-        </Col>
-      </Row>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>主控看板</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>实时数据 · 最后更新 {new Date().toLocaleTimeString('zh-CN')}</div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Select value={selectedSite} onChange={setSelectedSite} style={{ width: 200 }} options={mockSites.map(s => ({ value: s.id, label: s.name }))} />
+          <Tag color="error" icon={<AlertOutlined />}>未处理报警 3</Tag>
+        </div>
+      </div>
 
-      {/* ── Weather cards ── */}
+      <Card style={{ marginBottom: 16, background: 'linear-gradient(135deg, #1a1d2e, #1e2235)', borderColor: '#2a2d3e' }}>
+        <Row gutter={24} align="middle">
+          {[
+            { label: '温度', value: `${dash.weather.temperature}°C`, color: '#ff6b35' },
+            { label: '湿度', value: `${dash.weather.humidity}%`, color: '#4f9cf9' },
+            { label: '风速', value: `${dash.weather.windSpeed} m/s`, color: '#00d4aa' },
+            { label: '辐射', value: `${dash.weather.radiation} W/m²`, color: '#ffd32a' },
+            { label: '降雨量', value: `${dash.weather.rainfall} mm`, color: '#a55eea' },
+            { label: 'ET₀', value: `${dash.weather.et0} mm/d`, color: '#00d4aa' },
+          ].map(item => (
+            <Col key={item.label} flex="auto" style={{ textAlign: 'center', padding: '4px 0' }}>
+              <div className="stat-number" style={{ fontSize: 22, fontWeight: 700, color: item.color }}>{item.value}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{item.label}</div>
+            </Col>
+          ))}
+        </Row>
+      </Card>
+
       <Row gutter={[12, 12]} style={{ marginBottom: 16 }}>
-        {[
-          { label: '温度', value: `${mockWeather.temperature} °C`, icon: <ThunderboltOutlined />, color: '#ff7a45' },
-          { label: '湿度', value: `${mockWeather.humidity} %`, icon: <CloudOutlined />, color: '#1890ff' },
-          { label: '风速', value: `${mockWeather.windSpeed} m/s`, icon: <DashboardOutlined />, color: '#722ed1' },
-          { label: '辐射', value: `${mockWeather.radiation} W/m²`, icon: <ExperimentOutlined />, color: '#faad14' },
-          { label: '降雨量', value: `${mockWeather.rainfall} mm`, icon: <DropboxOutlined />, color: '#13c2c2' },
-        ].map((item) => (
-          <Col xs={12} sm={8} md={4} lg={4} key={item.label} style={{ flex: '1 1 0' }}>
-            <Card size="small" style={{ borderRadius: 8, textAlign: 'center' }}>
-              <div style={{ fontSize: 22, color: item.color }}>{item.icon}</div>
-              <div style={{ fontSize: 18, fontWeight: 600, marginTop: 4 }}>{item.value}</div>
-              <div style={{ fontSize: 12, color: '#888' }}>{item.label}</div>
+        {statCards.map(card => (
+          <Col xs={12} lg={6} key={card.label}>
+            <Card className={card.cls} style={{ height: 110 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 6 }}>{card.label}</div>
+                  <div className="stat-number" style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1 }}>
+                    {card.value}<span style={{ fontSize: 13, fontWeight: 400, marginLeft: 4, color: 'var(--text-secondary)' }}>{card.unit}</span>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+                  {card.icon}
+                  <Tag color={card.up ? 'error' : 'success'} style={{ margin: 0, fontSize: 11 }}>
+                    {card.up ? <ArrowUpOutlined /> : <ArrowDownOutlined />} {card.trend}
+                  </Tag>
+                </div>
+              </div>
             </Card>
           </Col>
         ))}
       </Row>
 
-      {/* ── Middle row: soil chart + physiology ── */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-        <Col xs={24} lg={16}>
-          <Card title="土壤含水率实时曲线（多深度）" size="small" style={{ borderRadius: 8 }}>
-            <ReactECharts option={soilOption} style={{ height: 280 }} />
+      <Row gutter={[12, 12]} style={{ marginBottom: 16 }}>
+        <Col xs={24} lg={15}>
+          <Card title="土壤含水率实时曲线（多深度）" style={{ height: 320 }}>
+            <ReactECharts option={soilChartOption} style={{ height: 240 }} />
           </Card>
         </Col>
-        <Col xs={24} lg={8}>
-          <Card title="植物生理指标" size="small" style={{ borderRadius: 8, height: '100%' }}>
-            <Space direction="vertical" style={{ width: '100%' }} size={16}>
-              <Card
-                size="small"
-                style={{ background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: 6 }}
-              >
-                <Statistic
-                  title={<Text style={{ fontSize: 12 }}>🌿 树液流速率</Text>}
-                  value={mockPhysiology.sapFlowRate}
-                  suffix="g/h"
-                  valueStyle={{ color: '#52c41a', fontSize: 22 }}
-                />
-              </Card>
-              <Card
-                size="small"
-                style={{ background: '#e6f7ff', border: '1px solid #91d5ff', borderRadius: 6 }}
-              >
-                <Statistic
-                  title={<Text style={{ fontSize: 12 }}>📏 茎干直径变化量</Text>}
-                  value={mockPhysiology.stemDiameterVariation}
-                  suffix="mm"
-                  precision={3}
-                  valueStyle={{ color: '#1890ff', fontSize: 22 }}
-                />
-              </Card>
-              <Card
-                size="small"
-                style={{ background: '#fff7e6', border: '1px solid #ffd591', borderRadius: 6 }}
-              >
-                <Statistic
-                  title={<Text style={{ fontSize: 12 }}>🍃 叶片膨压</Text>}
-                  value={mockPhysiology.leafTurgorPressure}
-                  suffix="MPa"
-                  precision={2}
-                  valueStyle={{ color: '#fa8c16', fontSize: 22 }}
-                />
-              </Card>
-              <Text type="secondary" style={{ fontSize: 11 }}>
-                更新时间：{mockPhysiology.updatedAt}
-              </Text>
-            </Space>
+        <Col xs={24} lg={9}>
+          <Card title="植物生理指标" style={{ height: 320 }}>
+            <Row>
+              <Col span={8}><ReactECharts option={makeGauge(dash.plantPhysiology.sapFlowRate, 300, '液流 g/h', '#00d4aa')} style={{ height: 150 }} /><div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)' }}>液流速率</div></Col>
+              <Col span={8}><ReactECharts option={makeGauge(Math.round(Math.abs(dash.plantPhysiology.stemDiameterVariation)*100), 100, '茎径', '#4f9cf9')} style={{ height: 150 }} /><div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)' }}>茎径变化</div></Col>
+              <Col span={8}><ReactECharts option={makeGauge(Math.round(dash.plantPhysiology.leafTurgorPressure*100), 200, '膨压', '#ff6b35')} style={{ height: 150 }} /><div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)' }}>叶片膨压</div></Col>
+            </Row>
+            <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(0,212,170,0.06)', borderRadius: 6, border: '1px solid rgba(0,212,170,0.2)' }}>
+              <Text style={{ fontSize: 12, color: 'var(--text-secondary)' }}>决策模式：<span style={{ color: 'var(--primary)' }}>植物水分亏缺指标</span>&nbsp;·&nbsp;当前状态：<span style={{ color: '#00d4aa' }}>无需灌溉</span></Text>
+            </div>
           </Card>
         </Col>
       </Row>
 
-      {/* ── Bottom: irrigation comparison ── */}
-      <Row>
-        <Col span={24}>
-          <Card title="今日灌溉计划 vs 实际执行（近7天）" size="small" style={{ borderRadius: 8 }}>
-            <ReactECharts option={irrigationOption} style={{ height: 240 }} />
-          </Card>
-        </Col>
-      </Row>
+      <Card title={`今日灌溉计划 vs 实际执行（近7天）— ${site.name}`}>
+        <ReactECharts option={barChartOption} style={{ height: 220 }} />
+      </Card>
     </div>
   );
 };
