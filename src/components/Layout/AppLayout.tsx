@@ -5,7 +5,7 @@ import {
   DashboardOutlined, RadarChartOutlined, AppstoreOutlined,
   HistoryOutlined, ReadOutlined, AlertOutlined, SettingOutlined,
   LogoutOutlined, BellOutlined, EnvironmentOutlined, ExperimentOutlined,
-  DotChartOutlined, MenuFoldOutlined, MenuUnfoldOutlined,
+  DotChartOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ApiOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -23,6 +23,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { key: '/dashboard', icon: <DashboardOutlined />, zh: '主控看板', en: 'Dashboard', mobileZh: '看板', mobileEn: 'Dash' },
   { key: '/monitor', icon: <RadarChartOutlined />, zh: '实时监控', en: 'Monitor', mobileZh: '监控', mobileEn: 'Live' },
+  { key: '/iot', icon: <ApiOutlined />, zh: 'IoT接入', en: 'IoT Access', mobileZh: '接入', mobileEn: 'IoT' },
   { key: '/sites', icon: <AppstoreOutlined />, zh: '站点管理', en: 'Site Management', mobileZh: '站点', mobileEn: 'Sites' },
   { key: '/history', icon: <HistoryOutlined />, zh: '历史数据', en: 'History', mobileZh: '历史', mobileEn: 'Data' },
   { key: '/map', icon: <EnvironmentOutlined />, zh: '站点地图', en: 'Site Map', mobileZh: '地图', mobileEn: 'Map' },

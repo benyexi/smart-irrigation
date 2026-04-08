@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Row, Col, Card, Select, Tag, Typography, Button } from 'antd';
 import { ArrowUpOutlined, ArrowDownOutlined, AlertOutlined, ThunderboltOutlined, DropboxOutlined, DashboardOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import { mockDashboard, mockHistoryData, mockHistoryTimestamps } from '../../mock';
 import { getCurrentSiteId, getSites, setCurrentSiteId } from '../../utils/siteStorage';
+import { addMqttStatusListener, getMqttStatus, subscribeMqtt, type MqttMessage, type MqttStatus } from '../../utils/mqttClient';
 import type { Site } from '../../types/site';
 import SiteModal from '../Sites/SiteModal';
 
@@ -20,8 +21,8 @@ const soilChartOption = {
   backgroundColor: 'transparent',
   grid: { top: 32, right: 16, bottom: 40, left: 48 },
   tooltip: { trigger: 'axis', backgroundColor: 'rgba(20,23,32,0.95)', borderColor: '#2a2d3e', textStyle: { color: '#e8eaf0' } },
-  legend: { data: ['20cm','40cm','60cm','80cm','100cm'], textStyle: { color: '#8892a4' }, bottom: 0 },
-  xAxis: { type: 'category', data: mockHistoryTimestamps.slice(-24).map((t: string) => t.slice(11,16)), axisLine: { lineStyle: { color: '#2a2d3e' } }, axisTick: { show: false }, axisLabel: { color: '#8892a4', fontSize: 11 }, splitLine: { show: false } },
+  legend: { data: ['20cm', '40cm', '60cm', '80cm', '100cm'], textStyle: { color: '#8892a4' }, bottom: 0 },
+  xAxis: { type: 'category', data: mockHistoryTimestamps.slice(-24).map((t: string) => t.slice(11, 16)), axisLine: { lineStyle: { color: '#2a2d3e' } }, axisTick: { show: false }, axisLabel: { color: '#8892a4', fontSize: 11 }, splitLine: { show: false } },
   yAxis: { type: 'value', name: '含水率(%)', nameTextStyle: { color: '#8892a4', fontSize: 11 }, axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: '#8892a4', fontSize: 11 }, splitLine: { lineStyle: { color: '#2a2d3e', type: 'dashed' } } },
   series: [
     { name: '20cm', type: 'line', smooth: true, data: mockHistoryData.soil_moisture_20cm.slice(-24), lineStyle: { color: '#00d4aa', width: 2 }, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(0,212,170,0.25)' }, { offset: 1, color: 'rgba(0,212,170,0.02)' }] } }, symbol: 'none' },
@@ -34,35 +35,109 @@ const soilChartOption = {
 
 const makeGauge = (value: number, max: number, name: string, color: string) => ({
   backgroundColor: 'transparent',
-  series: [{ type: 'gauge', startAngle: 200, endAngle: -20, min: 0, max, radius: '90%', pointer: { show: true, length: '60%', width: 4, itemStyle: { color } }, axisLine: { lineStyle: { width: 10, color: [[value/max, color],[1,'#2a2d3e']] } }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false }, detail: { valueAnimation: true, formatter: '{value}', color, fontSize: 20, fontWeight: 700, offsetCenter: [0,'30%'] }, title: { offsetCenter: [0,'60%'], color: '#8892a4', fontSize: 12 }, data: [{ value, name }] }],
+  series: [{ type: 'gauge', startAngle: 200, endAngle: -20, min: 0, max, radius: '90%', pointer: { show: true, length: '60%', width: 4, itemStyle: { color } }, axisLine: { lineStyle: { width: 10, color: [[value / max, color], [1, '#2a2d3e']] } }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false }, detail: { valueAnimation: true, formatter: '{value}', color, fontSize: 20, fontWeight: 700, offsetCenter: [0, '30%'] }, title: { offsetCenter: [0, '60%'], color: '#8892a4', fontSize: 12 }, data: [{ value, name }] }],
 });
 
 const barChartOption = {
   backgroundColor: 'transparent',
   grid: { top: 24, right: 16, bottom: 40, left: 48 },
   tooltip: { trigger: 'axis', backgroundColor: 'rgba(20,23,32,0.95)', borderColor: '#2a2d3e', textStyle: { color: '#e8eaf0' } },
-  legend: { data: ['计划灌水量','实际灌水量'], textStyle: { color: '#8892a4' }, bottom: 0 },
-  xAxis: { type: 'category', data: ['03-31','04-01','04-02','04-03','04-04','04-05','04-06'], axisLine: { lineStyle: { color: '#2a2d3e' } }, axisTick: { show: false }, axisLabel: { color: '#8892a4', fontSize: 11 } },
+  legend: { data: ['计划灌水量', '实际灌水量'], textStyle: { color: '#8892a4' }, bottom: 0 },
+  xAxis: { type: 'category', data: ['03-31', '04-01', '04-02', '04-03', '04-04', '04-05', '04-06'], axisLine: { lineStyle: { color: '#2a2d3e' } }, axisTick: { show: false }, axisLabel: { color: '#8892a4', fontSize: 11 } },
   yAxis: { type: 'value', name: '水量(m³)', nameTextStyle: { color: '#8892a4', fontSize: 11 }, axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: '#8892a4', fontSize: 11 }, splitLine: { lineStyle: { color: '#2a2d3e', type: 'dashed' } } },
   series: [
-    { name: '计划灌水量', type: 'bar', data: [45,50,38,52,0,55,48], barMaxWidth: 20, itemStyle: { color: 'rgba(79,156,249,0.7)', borderRadius: [4,4,0,0] } },
-    { name: '实际灌水量', type: 'bar', data: [42,48,40,50,0,53,46], barMaxWidth: 20, itemStyle: { color: 'rgba(0,212,170,0.8)', borderRadius: [4,4,0,0] } },
+    { name: '计划灌水量', type: 'bar', data: [45, 50, 38, 52, 0, 55, 48], barMaxWidth: 20, itemStyle: { color: 'rgba(79,156,249,0.7)', borderRadius: [4, 4, 0, 0] } },
+    { name: '实际灌水量', type: 'bar', data: [42, 48, 40, 50, 0, 53, 46], barMaxWidth: 20, itemStyle: { color: 'rgba(0,212,170,0.8)', borderRadius: [4, 4, 0, 0] } },
   ],
+};
+
+const liveMetricSensorTypes = new Set(['sapflow', 'stem_diameter', 'leaf_turgor']);
+
+const getNumericValue = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+};
+
+const getTelemetryValue = (payload: unknown): number | null => {
+  if (typeof payload === 'number' || typeof payload === 'string') {
+    return getNumericValue(payload);
+  }
+
+  if (!payload || typeof payload !== 'object') {
+    return null;
+  }
+
+  const data = payload as Record<string, unknown>;
+  const nestedData = data.data && typeof data.data === 'object' ? data.data as Record<string, unknown> : null;
+
+  return getNumericValue(data.value)
+    ?? getNumericValue(data.reading)
+    ?? getNumericValue(data.currentValue)
+    ?? (nestedData ? getNumericValue(nestedData.value) ?? getNumericValue(nestedData.reading) : null);
+};
+
+const getTopicDeviceId = (topic: string): string | null => {
+  const parts = topic.split('/');
+  if (parts.length < 6) {
+    return null;
+  }
+
+  return parts[4]?.trim() || null;
+};
+
+const normalizeId = (value: unknown): string => {
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  return value.trim();
 };
 
 const Dashboard: React.FC = () => {
   const [sites, setSites] = useState<Site[]>(() => getSites());
-  const [selectedSite, setSelectedSite] = useState(() => {
-    const savedSiteId = getCurrentSiteId();
-    return savedSiteId || sites[0]?.id || '';
-  });
+  const [selectedSite, setSelectedSite] = useState<string>(() => getCurrentSiteId());
   const [siteModalOpen, setSiteModalOpen] = useState(false);
+  const [mqttStatus, setMqttStatus] = useState<MqttStatus>(() => getMqttStatus());
+  const [plantPhysiology, setPlantPhysiology] = useState(() => mockDashboard.plantPhysiology);
+
   const dash = mockDashboard;
-  const site = sites.find((s) => s.id === selectedSite) ?? sites[0];
+  const site = useMemo(() => sites.find((s) => s.id === selectedSite) ?? sites[0], [sites, selectedSite]);
+  const currentSiteId = site?.id ?? selectedSite;
+
+  const monitoredSensors = useMemo(() => {
+    const map = new Map<string, Site['sensors'][number]>();
+
+    site?.sensors.forEach((sensor) => {
+      if (!liveMetricSensorTypes.has(sensor.type)) {
+        return;
+      }
+
+      const deviceId = sensor.deviceId.trim() || sensor.id.trim();
+      if (deviceId) {
+        map.set(deviceId, sensor);
+      }
+
+      const fallbackId = sensor.id.trim();
+      if (fallbackId) {
+        map.set(fallbackId, sensor);
+      }
+    });
+
+    return map;
+  }, [site]);
 
   const handleSiteChange = (siteId: string) => {
     setSelectedSite(siteId);
     setCurrentSiteId(siteId);
+    setPlantPhysiology(mockDashboard.plantPhysiology);
   };
 
   const openSiteModal = () => {
@@ -72,14 +147,87 @@ const Dashboard: React.FC = () => {
     setSiteModalOpen(true);
   };
 
+  useEffect(() => {
+    return addMqttStatusListener(setMqttStatus);
+  }, []);
+
+  useEffect(() => {
+    if (!currentSiteId) {
+      return undefined;
+    }
+
+    const topic = `siz/v1/${currentSiteId}/sensor/+/data`;
+    const handleTelemetry = (message: MqttMessage) => {
+      const payload = message.payload && typeof message.payload === 'object'
+        ? message.payload as Record<string, unknown>
+        : {};
+
+      const deviceId = normalizeId(payload.deviceId)
+        || normalizeId(payload.sensorId)
+        || normalizeId(payload.id)
+        || getTopicDeviceId(message.topic)
+        || '';
+
+      const sensor = monitoredSensors.get(deviceId);
+      if (!sensor) {
+        return;
+      }
+
+      const nextValue = getTelemetryValue(message.payload);
+      if (nextValue === null) {
+        return;
+      }
+
+      setPlantPhysiology((prev) => {
+        if (sensor.type === 'sapflow') {
+          return { ...prev, sapFlowRate: nextValue };
+        }
+
+        if (sensor.type === 'stem_diameter') {
+          return { ...prev, stemDiameterVariation: nextValue };
+        }
+
+        if (sensor.type === 'leaf_turgor') {
+          return { ...prev, leafTurgorPressure: nextValue };
+        }
+
+        return prev;
+      });
+    };
+
+    const unsubscribe = subscribeMqtt(topic, handleTelemetry);
+    return () => unsubscribe();
+  }, [currentSiteId, monitoredSensors]);
+
   return (
     <div className="page-container">
+      <style>{`
+        @keyframes mqttPulse {
+          0% { box-shadow: 0 0 0 0 rgba(0, 212, 170, 0.65); }
+          70% { box-shadow: 0 0 0 8px rgba(0, 212, 170, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(0, 212, 170, 0); }
+        }
+      `}</style>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
           <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>主控看板</div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>实时数据 · 最后更新 {new Date().toLocaleTimeString('zh-CN')}</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 999, border: '1px solid var(--border-base)', background: 'rgba(255,255,255,0.03)' }}>
+            <span
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: '50%',
+                background: mqttStatus === 'connected' ? '#00d4aa' : '#7b8494',
+                animation: mqttStatus === 'connected' ? 'mqttPulse 1.6s ease-in-out infinite' : 'none',
+              }}
+            />
+            <span style={{ fontSize: 12, color: mqttStatus === 'connected' ? '#00d4aa' : 'var(--text-muted)', fontWeight: 600 }}>
+              {mqttStatus === 'connected' ? '实时' : '离线'}
+            </span>
+          </div>
           <Select
             value={site ? site.id : undefined}
             onChange={handleSiteChange}
@@ -102,7 +250,7 @@ const Dashboard: React.FC = () => {
             { label: '辐射', value: `${dash.weather.radiation} W/m²`, color: '#ffd32a' },
             { label: '降雨量', value: `${dash.weather.rainfall} mm`, color: '#a55eea' },
             { label: 'ET₀', value: `${dash.weather.et0} mm/d`, color: '#00d4aa' },
-          ].map(item => (
+          ].map((item) => (
             <Col key={item.label} flex="auto" style={{ textAlign: 'center', padding: '4px 0' }}>
               <div className="stat-number" style={{ fontSize: 22, fontWeight: 700, color: item.color }}>{item.value}</div>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{item.label}</div>
@@ -112,7 +260,7 @@ const Dashboard: React.FC = () => {
       </Card>
 
       <Row gutter={[12, 12]} style={{ marginBottom: 16 }}>
-        {statCards.map(card => (
+        {statCards.map((card) => (
           <Col xs={12} lg={6} key={card.label}>
             <Card className={card.cls} style={{ height: 110 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
@@ -143,9 +291,9 @@ const Dashboard: React.FC = () => {
         <Col xs={24} lg={9}>
           <Card title="植物生理指标" style={{ height: 320 }}>
             <Row>
-              <Col span={8}><ReactECharts option={makeGauge(dash.plantPhysiology.sapFlowRate, 300, '液流 g/h', '#00d4aa')} style={{ height: 150 }} /><div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)' }}>液流速率</div></Col>
-              <Col span={8}><ReactECharts option={makeGauge(Math.round(Math.abs(dash.plantPhysiology.stemDiameterVariation)*100), 100, '茎径', '#4f9cf9')} style={{ height: 150 }} /><div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)' }}>茎径变化</div></Col>
-              <Col span={8}><ReactECharts option={makeGauge(Math.round(dash.plantPhysiology.leafTurgorPressure*100), 200, '膨压', '#ff6b35')} style={{ height: 150 }} /><div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)' }}>叶片膨压</div></Col>
+              <Col span={8}><ReactECharts option={makeGauge(plantPhysiology.sapFlowRate, 300, '液流 g/h', '#00d4aa')} style={{ height: 150 }} /><div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)' }}>液流速率</div></Col>
+              <Col span={8}><ReactECharts option={makeGauge(Math.round(Math.abs(plantPhysiology.stemDiameterVariation) * 100), 100, '茎径', '#4f9cf9')} style={{ height: 150 }} /><div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)' }}>茎径变化</div></Col>
+              <Col span={8}><ReactECharts option={makeGauge(Math.round(plantPhysiology.leafTurgorPressure * 100), 200, '膨压', '#ff6b35')} style={{ height: 150 }} /><div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)' }}>叶片膨压</div></Col>
             </Row>
             <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(0,212,170,0.06)', borderRadius: 6, border: '1px solid rgba(0,212,170,0.2)' }}>
               <Text style={{ fontSize: 12, color: 'var(--text-secondary)' }}>决策模式：<span style={{ color: 'var(--primary)' }}>植物水分亏缺指标</span>&nbsp;·&nbsp;当前状态：<span style={{ color: '#00d4aa' }}>无需灌溉</span></Text>
@@ -167,6 +315,7 @@ const Dashboard: React.FC = () => {
           setSites(getSites());
           setSelectedSite(savedSite.id);
           setCurrentSiteId(savedSite.id);
+          setPlantPhysiology(mockDashboard.plantPhysiology);
         }}
       />
     </div>

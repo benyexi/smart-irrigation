@@ -16,6 +16,7 @@ import MapPage from './pages/Map/Map';
 import Engine from './pages/Engine/Engine';
 import Screen from './pages/Screen/Screen';
 import Sites from './pages/Sites';
+import IoT from './pages/IoT/IoT';
 
 const appTheme = {
   algorithm: antTheme.defaultAlgorithm,
@@ -148,6 +149,7 @@ const AppRoutes: React.FC = () => (
       <Route index element={<Navigate to="/dashboard" replace />} />
       <Route path="dashboard" element={<Dashboard />} />
       <Route path="monitor" element={<Monitor />} />
+      <Route path="iot" element={<IoT />} />
       <Route path="sites" element={<Sites />} />
       <Route path="history" element={<History />} />
       <Route path="map" element={<MapPage />} />

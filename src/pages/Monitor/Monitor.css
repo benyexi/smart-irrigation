@@ -1,0 +1,317 @@
+.monitor-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.monitor-topbar,
+.monitor-history-card,
+.monitor-log-panel,
+.monitor-sensor-card,
+.monitor-control-card {
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(16px);
+}
+
+.monitor-topbar {
+  display: grid;
+  grid-template-columns: 260px minmax(320px, 520px) 1fr;
+  gap: 16px;
+  align-items: center;
+  padding: 16px 18px;
+}
+
+.monitor-topbar-left,
+.monitor-topbar-center,
+.monitor-topbar-metrics,
+.monitor-section-head,
+.monitor-card-top,
+.monitor-control-head,
+.monitor-action-row,
+.monitor-frequency-head,
+.monitor-log-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.monitor-topbar-left {
+  justify-content: flex-start;
+}
+
+.monitor-topbar-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.monitor-topbar-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.monitor-status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(100, 116, 139, 0.45);
+  box-shadow: 0 0 0 4px rgba(100, 116, 139, 0.12);
+}
+
+.monitor-status-dot.is-connected {
+  background: var(--accent-teal);
+  box-shadow: 0 0 0 4px rgba(15, 157, 128, 0.12), 0 0 18px rgba(15, 157, 128, 0.38);
+  animation: monitorPulse 1.2s ease-in-out infinite;
+}
+
+.monitor-status-dot.is-connecting {
+  background: var(--accent-yellow);
+  box-shadow: 0 0 0 4px rgba(199, 150, 47, 0.14);
+}
+
+.monitor-topbar-center {
+  justify-content: flex-start;
+}
+
+.monitor-topbar-center .ant-input-affix-wrapper {
+  flex: 1;
+}
+
+.monitor-topbar-metrics {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.monitor-metric-chip {
+  min-width: 120px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-base);
+  background: var(--bg-input);
+}
+
+.monitor-metric-chip span,
+.monitor-card-meta,
+.monitor-control-subline,
+.monitor-log-empty,
+.monitor-log-time,
+.monitor-log-topic,
+.monitor-frequency-head span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.monitor-metric-chip strong,
+.monitor-card-value span,
+.monitor-control-state,
+.monitor-frequency-head strong,
+.monitor-card-device {
+  color: var(--text-primary);
+}
+
+.monitor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 18px;
+  align-items: start;
+}
+
+.monitor-main {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.monitor-section-head {
+  margin-bottom: 12px;
+}
+
+.monitor-sensor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.monitor-sensor-card,
+.monitor-control-card {
+  overflow: hidden;
+}
+
+.monitor-sensor-card .ant-card-body,
+.monitor-control-card .ant-card-body,
+.monitor-history-card .ant-card-body {
+  padding: 16px;
+}
+
+.monitor-sensor-card.is-flashing {
+  border-color: var(--accent-teal);
+  box-shadow: 0 0 0 1px rgba(15, 157, 128, 0.22), 0 0 0 6px rgba(15, 157, 128, 0.08), var(--shadow-glow);
+}
+
+.monitor-card-device {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.monitor-card-value {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin: 12px 0 6px;
+}
+
+.monitor-card-value span {
+  font-size: 34px;
+  line-height: 1;
+  font-family: var(--font-number);
+}
+
+.monitor-card-value small {
+  font-size: 14px;
+  color: var(--text-secondary);
+  padding-bottom: 4px;
+}
+
+.monitor-card-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.monitor-simulator-grid {
+  display: grid;
+  grid-template-columns: 1.2fr repeat(3, minmax(120px, 160px)) 120px;
+  gap: 12px;
+  align-items: center;
+}
+
+.monitor-control-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.monitor-control-state {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  margin: 14px 0 8px;
+}
+
+.monitor-control-subline {
+  line-height: 1.6;
+}
+
+.monitor-action-row {
+  justify-content: flex-start;
+  margin-top: 14px;
+}
+
+.monitor-timed-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.monitor-frequency-block {
+  margin-top: 14px;
+}
+
+.monitor-log-panel {
+  position: sticky;
+  top: 78px;
+  width: 300px;
+  padding: 16px;
+}
+
+.monitor-log-panel h5 {
+  margin: 0;
+}
+
+.monitor-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: calc(100vh - 170px);
+  overflow: auto;
+  margin-top: 14px;
+  padding-right: 2px;
+}
+
+.monitor-log-entry {
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-base);
+  background: var(--bg-input);
+}
+
+.monitor-log-topic {
+  color: var(--primary);
+  margin: 4px 0 6px;
+  word-break: break-all;
+}
+
+.monitor-log-payload {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+@keyframes monitorPulse {
+  0% {
+    transform: scale(0.96);
+    opacity: 0.72;
+  }
+  60% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.96);
+    opacity: 0.72;
+  }
+}
+
+@media (max-width: 1280px) {
+  .monitor-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .monitor-log-panel {
+    position: static;
+    width: 100%;
+  }
+
+  .monitor-log-list {
+    max-height: 360px;
+  }
+}
+
+@media (max-width: 960px) {
+  .monitor-topbar,
+  .monitor-simulator-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .monitor-topbar-center,
+  .monitor-topbar-metrics,
+  .monitor-section-head,
+  .monitor-log-head,
+  .monitor-card-top,
+  .monitor-control-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

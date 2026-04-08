@@ -13,6 +13,7 @@
 | 登录页 | `#/login` | 全屏深色背景 + SVG波浪动效，账号 `admin` / 密码 `123456` |
 | 主控看板 | `#/dashboard` | 4大数字卡片、天气条、Gauge仪表盘（液流/茎径/膨压）、土壤含水率多深度折线图、灌溉计划柱状图 |
 | 实时监控 | `#/monitor` | 传感器状态卡片、阀门/水泵手动控制开关 |
+| IoT接入 | `#/iot` | MQTT接入配置、主题订阅与发布、设备在线状态与消息调试 |
 | 站点管理 | `#/sites` | 站点信息维护、田块可视化平面图、设备绑定与状态概览 |
 | 历史数据 | `#/history` | 多指标ECharts折线图、数据表格、CSV导出、生成HTML报告下载 |
 | 站点地图 | `#/map` | 高德地图（需配置API Key）/ SVG示意图 + 站点列表 + 状态标记 |
@@ -21,6 +22,19 @@
 | 报警记录 | `#/alerts` | 未处理/已处理分Tab、级别标签、标记处理功能 |
 | 用户设置 | `#/settings` | 个人信息、通知开关、API密钥 |
 | 数据大屏 | `#/screen` | 全屏独立页面、粒子动效背景、5秒自动刷新、土壤折线图+液流图+雷达图+报警饼图+站点分布SVG |
+
+---
+
+## IoT接入与MQTT实时通信
+
+- 统一 MQTT Topic 规范：  
+  `siz/v1/{siteId}/sensor/{deviceId}/data`（传感器上报）  
+  `siz/v1/{siteId}/control/{deviceId}/cmd`（控制指令）  
+  `siz/v1/{siteId}/control/{deviceId}/ack`（指令回执）  
+  `siz/v1/{siteId}/status`（设备心跳）
+- `#/monitor` 现支持：Broker连接状态栏、在线时长与消息计数、实时卡片、原始日志（清空/暂停/导出）、数据模拟器、阀门/水泵控制闭环（10秒 ack 超时机制）和指令历史筛选。
+- `#/dashboard` 顶部新增 MQTT 实时状态指示，且液流/茎径/膨压 Gauge 会按 MQTT 数据实时刷新。
+- `#/iot` 页面提供快速接入步骤、Python/Arduino/Node.js 上报示例、控制回执示例、Topic 与传感器枚举规范及复制站点ID能力。
 
 ---
 

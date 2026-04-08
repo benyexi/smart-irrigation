@@ -1,0 +1,308 @@
+.iot-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: var(--text-primary);
+}
+
+.iot-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 22px;
+  border: 1px solid var(--border-base);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--bg-card-solid) 92%, transparent), color-mix(in srgb, var(--bg-base-2) 86%, transparent));
+  box-shadow:
+    0 18px 42px rgba(15, 23, 42, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.46) inset;
+}
+
+.iot-hero-copy {
+  min-width: 0;
+}
+
+.iot-kicker {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.iot-title.ant-typography {
+  margin: 0;
+  color: var(--text-primary);
+  line-height: 1.12;
+}
+
+.iot-desc.ant-typography {
+  max-width: 880px;
+  margin: 10px 0 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.iot-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.iot-site-id-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 180px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-base);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bg-card-solid) 86%, transparent);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+}
+
+.iot-site-id-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.iot-site-id-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.iot-main-card {
+  border: 1px solid var(--border-base);
+  border-radius: 18px;
+  background: var(--bg-card);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
+}
+
+.iot-main-card .ant-card-body {
+  padding: 18px;
+}
+
+.iot-tabs .ant-tabs-nav {
+  margin-bottom: 18px;
+}
+
+.iot-tabs .ant-tabs-tab {
+  padding: 10px 0;
+}
+
+.iot-tabs .ant-tabs-tab + .ant-tabs-tab {
+  margin-left: 28px;
+}
+
+.iot-tabs .ant-tabs-tab-btn {
+  font-weight: 600;
+}
+
+.iot-tab-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.iot-section-card,
+.iot-note-card,
+.iot-code-card,
+.iot-mini-card {
+  border: 1px solid var(--border-base);
+  border-radius: 16px;
+  background: var(--bg-card);
+}
+
+.iot-section-card .ant-card-body,
+.iot-note-card .ant-card-body,
+.iot-code-card .ant-card-body {
+  padding: 16px;
+}
+
+.iot-steps {
+  padding: 6px 0;
+}
+
+.iot-steps .ant-steps-item-title {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.iot-steps .ant-steps-item-description {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.iot-mini-card .ant-card-body {
+  height: 100%;
+  padding: 16px;
+}
+
+.iot-mini-index {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--primary);
+  margin-bottom: 10px;
+}
+
+.iot-mini-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.iot-mini-desc {
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+.iot-inner-tabs .ant-tabs-nav {
+  margin-bottom: 16px;
+}
+
+.iot-note-title,
+.iot-table-title,
+.iot-code-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.iot-note-copy {
+  margin-bottom: 12px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.iot-code-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.iot-code-lang {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+.iot-code-block {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--border-base);
+  border-radius: 14px;
+  background: var(--bg-base-2);
+  color: var(--text-primary);
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.iot-table-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.iot-table-subtitle {
+  margin-top: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.iot-table .ant-table {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.iot-table .ant-table-thead > tr > th {
+  background: var(--bg-base-2);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.iot-table .ant-table-tbody > tr > td {
+  color: var(--text-secondary);
+}
+
+.iot-table .ant-table-tbody > tr:hover > td {
+  background: var(--primary-dim);
+}
+
+@media (max-width: 992px) {
+  .iot-hero {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .iot-hero-actions {
+    justify-content: flex-start;
+  }
+
+  .iot-tabs .ant-tabs-tab + .ant-tabs-tab {
+    margin-left: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .iot-page {
+    gap: 12px;
+  }
+
+  .iot-hero,
+  .iot-main-card .ant-card-body {
+    padding: 14px;
+  }
+
+  .iot-desc.ant-typography {
+    font-size: 13px;
+    line-height: 1.65;
+  }
+
+  .iot-site-id-panel {
+    width: 100%;
+  }
+
+  .iot-main-card .ant-card-body {
+    padding: 12px;
+  }
+
+  .iot-tabs .ant-tabs-nav {
+    margin-bottom: 14px;
+  }
+
+  .iot-tabs .ant-tabs-tab + .ant-tabs-tab {
+    margin-left: 14px;
+  }
+
+  .iot-code-head,
+  .iot-table-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .iot-code-block {
+    padding: 12px;
+    font-size: 11px;
+  }
+}
