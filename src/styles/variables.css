@@ -1,38 +1,61 @@
 :root {
-  --bg-base: #0f1117;
-  --bg-card: #1a1d2e;
-  --bg-card-hover: #1e2235;
-  --bg-sidebar: #141720;
-  --bg-header: #141720;
-  --bg-input: #0f1117;
+  /* Typography */
+  --font-display: 'SF Pro Display', 'Avenir Next', 'Inter', 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  --font-body: 'SF Pro Text', 'Inter', 'Avenir Next', 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  --font-number: 'SF Pro Display', 'Inter', 'DIN Alternate', 'Roboto', 'PingFang SC', sans-serif;
 
-  --border-base: #2a2d3e;
-  --border-focus: #00d4aa;
+  /* Core surfaces */
+  --bg-base: #f2f4f8;
+  --bg-base-2: #edf1f6;
+  --bg-card: rgba(255, 255, 255, 0.78);
+  --bg-card-solid: #ffffff;
+  --bg-card-hover: rgba(255, 255, 255, 0.9);
+  --bg-sidebar: rgba(248, 250, 253, 0.72);
+  --bg-header: rgba(248, 250, 253, 0.68);
+  --bg-input: rgba(247, 250, 253, 0.94);
 
-  --primary: #00d4aa;
-  --primary-dim: rgba(0, 212, 170, 0.15);
-  --primary-glow: 0 0 12px rgba(0, 212, 170, 0.45);
+  /* Borders */
+  --border-base: rgba(15, 23, 42, 0.12);
+  --border-strong: rgba(19, 102, 255, 0.32);
+  --border-focus: #1366ff;
 
-  --accent-blue: #4f9cf9;
-  --accent-orange: #ff6b35;
-  --accent-red: #ff4757;
-  --accent-yellow: #ffd700;
+  /* Brand palette */
+  --primary: #1366ff;
+  --primary-strong: #0f56d8;
+  --primary-dim: rgba(19, 102, 255, 0.12);
+  --primary-glow: 0 0 24px rgba(19, 102, 255, 0.2);
 
-  --text-primary: #e8eaf0;
-  --text-secondary: #8892a4;
-  --text-muted: #4a5568;
-  --text-inverse: #0f1117;
+  /* Accent colors */
+  --accent-cyan: #5f9eff;
+  --accent-violet: #7a8aa5;
+  --accent-teal: #0f9d80;
+  --accent-orange: #db7f2f;
+  --accent-red: #cf4453;
+  --accent-yellow: #c7962f;
 
-  --chart-grid: #2a2d3e;
-  --chart-text: #8892a4;
-  --chart-tooltip-bg: rgba(20, 23, 32, 0.95);
+  /* Text */
+  --text-primary: #111827;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-inverse: #ffffff;
 
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  /* Charts */
+  --chart-grid: rgba(100, 116, 139, 0.2);
+  --chart-text: #64748b;
+  --chart-tooltip-bg: rgba(15, 23, 42, 0.95);
 
-  --transition: all 0.2s ease;
+  /* Radius */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
 
-  --shadow-card: 0 2px 16px rgba(0, 0, 0, 0.4);
-  --shadow-glow: 0 0 20px rgba(0, 212, 170, 0.2);
+  /* Motion */
+  --transition: 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* Shadows */
+  --shadow-card: 0 10px 30px rgba(15, 23, 42, 0.08);
+  --shadow-glow: 0 16px 40px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(19, 102, 255, 0.08);
+  --shadow-elevated: 0 20px 54px rgba(15, 23, 42, 0.16);
+
+  color-scheme: light;
 }

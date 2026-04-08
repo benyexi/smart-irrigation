@@ -640,10 +640,10 @@ const SiteModal: React.FC<SiteModalProps> = ({ open, initialSite, onCancel, onSa
     >
       <div className="site-modal-header">
         <Space direction="vertical" size={2}>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#e8eaf0' }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
             {initialSite ? '编辑站点配置' : '新建站点'}
           </div>
-          <div style={{ fontSize: 12, color: '#8892a4' }}>站点管理 · Site Management</div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>站点管理 · Site Management</div>
         </Space>
       </div>
 
@@ -937,11 +937,11 @@ const SiteModal: React.FC<SiteModalProps> = ({ open, initialSite, onCancel, onSa
                     className={`site-mode-card ${decisionMode === mode.id ? 'active' : ''}`}
                     onClick={() => onModeSelect(mode.id)}
                   >
-                    <Tag color="#00d4aa" className="site-mode-tag">模式 {mode.id}</Tag>
+                    <Tag color="#1366ff" className="site-mode-tag">模式 {mode.id}</Tag>
                     <div className="site-mode-title">{mode.name}</div>
                     <div className="site-mode-desc">{mode.desc}</div>
                     {decisionMode === mode.id ? (
-                      <Tag color="#00d4aa" className="site-mode-selected">已选</Tag>
+                      <Tag color="#1366ff" className="site-mode-selected">已选</Tag>
                     ) : null}
                   </div>
                 ))}

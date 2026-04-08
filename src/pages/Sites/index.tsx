@@ -10,7 +10,7 @@ import './Sites.css';
 const { Title, Text } = Typography;
 
 const statusColorMap: Record<Site['status'], string> = {
-  running: '#00d4aa',
+  running: '#1366ff',
   pending: '#8892a4',
   alarm: '#ff4757',
 };
@@ -105,7 +105,7 @@ const SitesPage: React.FC = () => {
         <Col xs={12} md={6}>
           <Card className="site-stat-card">
             <div className="site-stat-label">运行中</div>
-            <div className="site-stat-value" style={{ color: '#00d4aa' }}>
+            <div className="site-stat-value" style={{ color: '#1366ff' }}>
               {stats.running}
             </div>
           </Card>
