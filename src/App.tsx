@@ -1,131 +1,21 @@
 import React from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ConfigProvider, theme as antTheme } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import AppLayout from './components/Layout/AppLayout';
 
-import Login from './pages/Login/Login';
+import Alerts from './pages/Alerts/Alerts';
 import Dashboard from './pages/Dashboard/Dashboard';
-import Monitor from './pages/Monitor/Monitor';
-import Setup from './pages/Setup/Setup';
+import Engine from './pages/Engine/Engine';
 import History from './pages/History/History';
 import Knowledge from './pages/Knowledge/Knowledge';
-import Alerts from './pages/Alerts/Alerts';
-import Settings from './pages/Settings/Settings';
+import Login from './pages/Login/Login';
 import MapPage from './pages/Map/Map';
-import Engine from './pages/Engine/Engine';
+import Monitor from './pages/Monitor/Monitor';
 import Screen from './pages/Screen/Screen';
-
-const appTheme = {
-  algorithm: antTheme.defaultAlgorithm,
-  token: {
-    colorPrimary: '#1366ff',
-    colorInfo: '#1366ff',
-    colorSuccess: '#0f9d80',
-    colorWarning: '#c7962f',
-    colorError: '#cf4453',
-    colorLink: '#1366ff',
-    colorBgBase: '#f2f4f8',
-    colorBgLayout: '#f2f4f8',
-    colorBgContainer: '#ffffff',
-    colorBgElevated: '#ffffff',
-    colorBorder: 'rgba(15, 23, 42, 0.12)',
-    colorBorderSecondary: 'rgba(15, 23, 42, 0.08)',
-    colorText: '#111827',
-    colorTextSecondary: '#334155',
-    colorTextTertiary: '#64748b',
-    borderRadius: 12,
-    borderRadiusLG: 18,
-    borderRadiusSM: 10,
-    fontFamily: "'SF Pro Text', 'SF Pro Display', 'Inter', 'Avenir Next', 'PingFang SC', 'Hiragino Sans GB', sans-serif",
-    boxShadow:
-      '0 12px 34px rgba(15, 23, 42, 0.1), 0 0 0 1px rgba(19, 102, 255, 0.06)',
-  },
-  components: {
-    Layout: {
-      headerBg: 'rgba(248, 250, 253, 0.68)',
-      siderBg: 'rgba(248, 250, 253, 0.72)',
-      bodyBg: '#f2f4f8',
-      triggerBg: 'rgba(248, 250, 253, 0.84)',
-    },
-    Menu: {
-      itemBg: 'transparent',
-      itemHoverBg: 'rgba(19, 102, 255, 0.07)',
-      itemSelectedBg: 'rgba(19, 102, 255, 0.12)',
-      itemSelectedColor: '#1366ff',
-      itemHoverColor: '#111827',
-      itemColor: '#334155',
-      itemBorderRadius: 12,
-    },
-    Card: {
-      colorBgContainer: 'rgba(255, 255, 255, 0.82)',
-      colorBorderSecondary: 'rgba(15, 23, 42, 0.12)',
-      boxShadowTertiary:
-        '0 12px 34px rgba(15, 23, 42, 0.1), 0 0 0 1px rgba(19, 102, 255, 0.06)',
-      headerBg: 'transparent',
-    },
-    Table: {
-      colorBgContainer: 'rgba(255, 255, 255, 0.82)',
-      headerBg: '#f2f5f9',
-      borderColor: 'rgba(15, 23, 42, 0.12)',
-      rowHoverBg: 'rgba(19, 102, 255, 0.05)',
-    },
-    Input: {
-      colorBgContainer: '#f7fafd',
-      colorBorder: 'rgba(15, 23, 42, 0.14)',
-      activeBorderColor: '#1366ff',
-      hoverBorderColor: '#1366ff',
-      activeShadow: '0 0 0 3px rgba(19, 102, 255, 0.12)',
-    },
-    Select: {
-      colorBgContainer: '#f7fafd',
-      colorBorder: 'rgba(15, 23, 42, 0.14)',
-      optionSelectedBg: 'rgba(19, 102, 255, 0.12)',
-      optionActiveBg: 'rgba(19, 102, 255, 0.07)',
-    },
-    Button: {
-      colorPrimary: '#1366ff',
-      colorPrimaryHover: '#0f56d8',
-      colorPrimaryActive: '#0b48b7',
-      colorPrimaryText: '#ffffff',
-      defaultBg: 'rgba(255, 255, 255, 0.78)',
-      defaultBorderColor: 'rgba(15, 23, 42, 0.14)',
-    },
-    Modal: {
-      contentBg: '#ffffff',
-      headerBg: '#ffffff',
-      footerBg: '#ffffff',
-    },
-    Slider: {
-      trackBg: '#1366ff',
-      handleColor: '#1366ff',
-      railBg: 'rgba(15, 23, 42, 0.12)',
-    },
-    Steps: {
-      colorPrimary: '#1366ff',
-    },
-    Tabs: {
-      inkBarColor: '#1366ff',
-      itemActiveColor: '#111827',
-      itemSelectedColor: '#1366ff',
-      itemHoverColor: '#1366ff',
-    },
-    DatePicker: {
-      colorBgContainer: '#f7fafd',
-      colorBorder: 'rgba(15, 23, 42, 0.14)',
-      activeBorderColor: '#1366ff',
-    },
-    Progress: {
-      defaultColor: '#1366ff',
-      remainingColor: 'rgba(15, 23, 42, 0.1)',
-    },
-    Badge: {
-      indicatorHeight: 8,
-      statusSize: 8,
-    },
-  },
-};
+import Settings from './pages/Settings/Settings';
+import Sites from './pages/Sites';
 
 const RequireAuth = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
@@ -135,20 +25,26 @@ const RequireAuth = ({ children }: { children: React.ReactNode }) => {
 const AppRoutes: React.FC = () => (
   <Routes>
     <Route path="/login" element={<Login />} />
-    {/* Data screen — standalone, no layout */}
-    <Route path="/screen" element={<RequireAuth><Screen /></RequireAuth>} />
+    <Route
+      path="/screen"
+      element={(
+        <RequireAuth>
+          <Screen />
+        </RequireAuth>
+      )}
+    />
     <Route
       path="/"
-      element={
+      element={(
         <RequireAuth>
           <AppLayout />
         </RequireAuth>
-      }
+      )}
     >
       <Route index element={<Navigate to="/dashboard" replace />} />
       <Route path="dashboard" element={<Dashboard />} />
       <Route path="monitor" element={<Monitor />} />
-      <Route path="setup" element={<Setup />} />
+      <Route path="sites" element={<Sites />} />
       <Route path="history" element={<History />} />
       <Route path="map" element={<MapPage />} />
       <Route path="engine" element={<Engine />} />
@@ -163,7 +59,101 @@ const AppRoutes: React.FC = () => (
 const App: React.FC = () => (
   <ConfigProvider
     locale={zhCN}
-    theme={appTheme}
+    theme={{
+      algorithm: antTheme.darkAlgorithm,
+      token: {
+        colorPrimary: '#00d4aa',
+        colorInfo: '#00d4aa',
+        colorSuccess: '#00d4aa',
+        colorWarning: '#ff6b35',
+        colorError: '#ff4757',
+        colorLink: '#00d4aa',
+        colorBgBase: '#0f1117',
+        colorBgLayout: '#0f1117',
+        colorBgContainer: '#1a1d2e',
+        colorBgElevated: '#1a1d2e',
+        colorBorder: '#2a2d3e',
+        colorBorderSecondary: '#2a2d3e',
+        colorText: '#e8eaf0',
+        colorTextSecondary: '#8892a4',
+        colorTextTertiary: '#4a5568',
+        borderRadius: 8,
+        borderRadiusLG: 12,
+        borderRadiusSM: 6,
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif",
+      },
+      components: {
+        Layout: {
+          headerBg: '#141720',
+          siderBg: '#141720',
+          bodyBg: '#0f1117',
+        },
+        Menu: {
+          darkItemBg: 'transparent',
+          darkSubMenuItemBg: 'transparent',
+          darkItemSelectedBg: 'rgba(0,212,170,0.15)',
+          itemSelectedColor: '#00d4aa',
+          itemHoverColor: '#e8eaf0',
+          itemColor: '#8892a4',
+        },
+        Card: {
+          colorBgContainer: '#1a1d2e',
+          colorBorderSecondary: '#2a2d3e',
+        },
+        Table: {
+          colorBgContainer: '#1a1d2e',
+          headerBg: '#1e2235',
+          borderColor: '#2a2d3e',
+          rowHoverBg: '#1e2235',
+        },
+        Input: {
+          colorBgContainer: '#0f1117',
+          colorBorder: '#2a2d3e',
+          activeBorderColor: '#00d4aa',
+          hoverBorderColor: '#00d4aa',
+        },
+        Select: {
+          colorBgContainer: '#0f1117',
+          colorBorder: '#2a2d3e',
+          optionSelectedBg: 'rgba(0,212,170,0.15)',
+          optionActiveBg: 'rgba(0,212,170,0.1)',
+        },
+        Button: {
+          colorPrimary: '#00d4aa',
+          colorPrimaryHover: '#00e8bc',
+          colorPrimaryActive: '#00c39c',
+          colorPrimaryText: '#0f1117',
+        },
+        Modal: {
+          contentBg: '#1a1d2e',
+          headerBg: '#1a1d2e',
+          footerBg: '#1a1d2e',
+        },
+        Slider: {
+          trackBg: '#00d4aa',
+          railBg: '#2a2d3e',
+          handleColor: '#00d4aa',
+        },
+        Steps: {
+          colorPrimary: '#00d4aa',
+        },
+        Tabs: {
+          inkBarColor: '#00d4aa',
+          itemSelectedColor: '#00d4aa',
+          itemActiveColor: '#00d4aa',
+          itemHoverColor: '#00d4aa',
+        },
+        DatePicker: {
+          colorBgContainer: '#0f1117',
+          colorBorder: '#2a2d3e',
+          activeBorderColor: '#00d4aa',
+        },
+        Progress: {
+          defaultColor: '#00d4aa',
+          remainingColor: '#2a2d3e',
+        },
+      },
+    }}
   >
     <AuthProvider>
       <HashRouter>

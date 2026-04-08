@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Row, Col, Card, Select, Button, Table, Typography, DatePicker, Modal, Form, Space, message } from 'antd';
 import { DownloadOutlined, FileTextOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
@@ -20,7 +20,6 @@ const History: React.FC = () => {
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>(['soil_moisture_40cm', 'sap_flow_rate']);
   const [reportModal, setReportModal] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const chartRef = useRef<any>(null);
 
   const chartOption = useMemo(() => ({
     backgroundColor: 'transparent',
@@ -101,7 +100,7 @@ ${tableData.slice(0,20).map(r=>`<tr><td>${r.time}</td>${selectedMetrics.map(m=>`
       </Card>
 
       <Card style={{ marginBottom: 16 }}>
-        <ReactECharts ref={chartRef} option={chartOption} style={{ height: 300 }} />
+        <ReactECharts option={chartOption} style={{ height: 300 }} />
       </Card>
 
       <Card>

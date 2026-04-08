@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { Row, Col, Card, Select, Tag, Typography } from 'antd';
+import { Row, Col, Card, Select, Tag, Typography, Button } from 'antd';
 import { ArrowUpOutlined, ArrowDownOutlined, AlertOutlined, ThunderboltOutlined, DropboxOutlined, DashboardOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
-import { mockSites, mockDashboard, mockHistoryData, mockHistoryTimestamps } from '../../mock';
+import { mockDashboard, mockHistoryData, mockHistoryTimestamps } from '../../mock';
+import { getCurrentSiteId, getSites, setCurrentSiteId } from '../../utils/siteStorage';
+import type { Site } from '../../types/site';
+import SiteModal from '../Sites/SiteModal';
 
 const { Text } = Typography;
 
@@ -48,9 +51,26 @@ const barChartOption = {
 };
 
 const Dashboard: React.FC = () => {
-  const [selectedSite, setSelectedSite] = useState(mockSites[0].id);
-  const site = mockSites.find(s => s.id === selectedSite) ?? mockSites[0];
+  const [sites, setSites] = useState<Site[]>(() => getSites());
+  const [selectedSite, setSelectedSite] = useState(() => {
+    const savedSiteId = getCurrentSiteId();
+    return savedSiteId || sites[0]?.id || '';
+  });
+  const [siteModalOpen, setSiteModalOpen] = useState(false);
   const dash = mockDashboard;
+  const site = sites.find((s) => s.id === selectedSite) ?? sites[0];
+
+  const handleSiteChange = (siteId: string) => {
+    setSelectedSite(siteId);
+    setCurrentSiteId(siteId);
+  };
+
+  const openSiteModal = () => {
+    if (site === undefined) {
+      return;
+    }
+    setSiteModalOpen(true);
+  };
 
   return (
     <div className="page-container">
@@ -60,7 +80,15 @@ const Dashboard: React.FC = () => {
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>实时数据 · 最后更新 {new Date().toLocaleTimeString('zh-CN')}</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Select value={selectedSite} onChange={setSelectedSite} style={{ width: 200 }} options={mockSites.map(s => ({ value: s.id, label: s.name }))} />
+          <Select
+            value={site ? site.id : undefined}
+            onChange={handleSiteChange}
+            style={{ width: 220 }}
+            options={sites.map((s) => ({ value: s.id, label: s.name }))}
+          />
+          <Button size="small" type="default" ghost onClick={openSiteModal} disabled={!site}>
+            ⚙️ 配置此站点
+          </Button>
           <Tag color="error" icon={<AlertOutlined />}>未处理报警 3</Tag>
         </div>
       </div>
@@ -126,9 +154,21 @@ const Dashboard: React.FC = () => {
         </Col>
       </Row>
 
-      <Card title={`今日灌溉计划 vs 实际执行（近7天）— ${site.name}`}>
+      <Card title={`今日灌溉计划 vs 实际执行（近7天）— ${site?.name ?? '未选择站点'}`}>
         <ReactECharts option={barChartOption} style={{ height: 220 }} />
       </Card>
+
+      <SiteModal
+        open={siteModalOpen}
+        initialSite={site ?? null}
+        onCancel={() => setSiteModalOpen(false)}
+        onSaved={(savedSite: Site) => {
+          setSiteModalOpen(false);
+          setSites(getSites());
+          setSelectedSite(savedSite.id);
+          setCurrentSiteId(savedSite.id);
+        }}
+      />
     </div>
   );
 };
