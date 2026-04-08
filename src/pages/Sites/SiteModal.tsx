@@ -788,6 +788,31 @@ const SiteModal: React.FC<SiteModalProps> = ({ open, initialSite, onCancel, onSa
               </div>
 
               <div className="site-editor-right">
+                <div className="site-canvas-toolbar">
+                  <button
+                    type="button"
+                    className={`site-canvas-tool ${drawMode === 'pipe' ? 'active' : ''}`}
+                    onClick={() => onSetDrawMode(drawMode === 'pipe' ? 'none' : 'pipe')}
+                  >
+                    画管道
+                  </button>
+                  <button
+                    type="button"
+                    className={`site-canvas-tool ${drawMode === 'sprinkler' ? 'active' : ''}`}
+                    onClick={() => onSetDrawMode(drawMode === 'sprinkler' ? 'none' : 'sprinkler')}
+                  >
+                    画喷头
+                  </button>
+                  <button
+                    type="button"
+                    className="site-canvas-tool"
+                    onClick={onClearPipelines}
+                  >
+                    清除管道
+                  </button>
+                  <span className="site-canvas-tip">拖动图标可调整坐标，点击空白区可新增传感器</span>
+                </div>
+
                 <div className="site-svg-wrap">
                   {addSensorAt ? (
                     <div
@@ -808,39 +833,51 @@ const SiteModal: React.FC<SiteModalProps> = ({ open, initialSite, onCancel, onSa
                     onMouseLeave={onSvgMouseUp}
                     onClick={onSvgClick}
                   >
-                    <rect x="0" y="0" width="100" height="100" fill="#0f1117" />
-                    <rect x="1" y="1" width="98" height="98" fill="none" stroke="#00d4aa" strokeWidth="0.6" />
+                    <rect x="0" y="0" width="100" height="100" fill="#0b1223" />
+                    <rect x="1" y="1" width="98" height="98" fill="none" stroke="#1366ff" strokeWidth="0.6" />
 
                     {Array.from({ length: 9 }).map((_, idx) => {
                       const pos = (idx + 1) * 10;
                       return (
                         <g key={`grid-${pos}`}>
-                          <line x1={pos} y1={1} x2={pos} y2={99} stroke="#2a2d3e" strokeWidth={0.25} />
-                          <line x1={1} y1={pos} x2={99} y2={pos} stroke="#2a2d3e" strokeWidth={0.25} />
+                          <line x1={pos} y1={1} x2={pos} y2={99} stroke="#2f3f66" strokeWidth={0.25} />
+                          <line x1={1} y1={pos} x2={99} y2={pos} stroke="#2f3f66" strokeWidth={0.25} />
                         </g>
                       );
                     })}
 
                     {pipelines.map((pipe) => {
                       if (pipe.type === 'pipe') {
+                        if (
+                          typeof pipe.x1 !== 'number'
+                          || typeof pipe.y1 !== 'number'
+                          || typeof pipe.x2 !== 'number'
+                          || typeof pipe.y2 !== 'number'
+                        ) {
+                          return null;
+                        }
                         return (
                           <line
                             key={pipe.id}
-                            x1={pipe.x1}
-                            y1={pipe.y1}
-                            x2={pipe.x2}
-                            y2={pipe.y2}
+                            x1={clamp(pipe.x1, 0, 100)}
+                            y1={clamp(pipe.y1, 0, 100)}
+                            x2={clamp(pipe.x2, 0, 100)}
+                            y2={clamp(pipe.y2, 0, 100)}
                             stroke="#4f9cf9"
-                            strokeWidth={0.8}
+                            strokeWidth={0.9}
                           />
                         );
                       }
 
-                      const x = pipe.x ?? 50;
-                      const y = pipe.y ?? 50;
+                      if (typeof pipe.x !== 'number' || typeof pipe.y !== 'number') {
+                        return null;
+                      }
+
+                      const x = clamp(pipe.x, 0, 100);
+                      const y = clamp(pipe.y, 0, 100);
                       return (
                         <g key={pipe.id}>
-                          <circle cx={x} cy={y} r={1.2} fill="none" stroke="#4f9cf9" strokeWidth={0.8} />
+                          <circle cx={x} cy={y} r={1.2} fill="none" stroke="#4f9cf9" strokeWidth={0.9} />
                           {Array.from({ length: 8 }).map((__, rayIdx) => {
                             const angle = (Math.PI * 2 * rayIdx) / 8;
                             const x2 = x + Math.cos(angle) * 2.4;
@@ -863,7 +900,9 @@ const SiteModal: React.FC<SiteModalProps> = ({ open, initialSite, onCancel, onSa
                       />
                     ) : null}
 
-                    {sensors.map((sensor) => (
+                    {sensors.map((sensor, index) => {
+                      const label = sensor.deviceId.trim() || `S${index + 1}`;
+                      return (
                       <g
                         key={sensor.id}
                         onMouseDown={(evt) => {
@@ -874,55 +913,38 @@ const SiteModal: React.FC<SiteModalProps> = ({ open, initialSite, onCancel, onSa
                       >
                         <title>{`${sensorTypeLabel(sensor.type)} / ${sensor.deviceId || '未填'} / ${sensor.location || '未填位置'}`}</title>
                         {renderSensorIcon(sensor)}
+                        <rect
+                          x={sensor.x - 2.9}
+                          y={sensor.y + 4}
+                          width={5.8}
+                          height={2.8}
+                          rx={1}
+                          fill="rgba(11,18,35,0.82)"
+                          stroke="rgba(143,179,234,0.5)"
+                          strokeWidth={0.15}
+                        />
                         <text
                           x={sensor.x}
                           y={sensor.y + 6}
-                          fill="#e8eaf0"
-                          fontSize={2.2}
+                          fill="#dce7ff"
+                          fontSize={1.9}
                           textAnchor="middle"
                         >
-                          {sensor.deviceId || 'ID'}
+                          {label}
                         </text>
                       </g>
-                    ))}
-
-                    <foreignObject x="2" y="2" width="72" height="12">
-                      <div className="site-tool-row">
-                        <button
-                          type="button"
-                          className={`site-tool-btn ${drawMode === 'pipe' ? 'active' : ''}`}
-                          onClick={() => onSetDrawMode(drawMode === 'pipe' ? 'none' : 'pipe')}
-                        >
-                          ✏️ 画管道
-                        </button>
-                        <button
-                          type="button"
-                          className={`site-tool-btn ${drawMode === 'sprinkler' ? 'active' : ''}`}
-                          onClick={() => onSetDrawMode(drawMode === 'sprinkler' ? 'none' : 'sprinkler')}
-                        >
-                          💧 画喷头
-                        </button>
-                        <button
-                          type="button"
-                          className="site-tool-btn"
-                          onClick={onClearPipelines}
-                        >
-                          🗑️ 清除管道
-                        </button>
-                      </div>
-                    </foreignObject>
-
-                    <g>
-                      <rect className="site-legend" x="67" y="66" width="31" height="31" rx="1.5" />
-                      <text x="69" y="70" fill="#e8eaf0" fontSize={2.2}>图例</text>
-                      <text x="69" y="74" fill="#e8eaf0" fontSize={2}>蓝点 土壤/设备</text>
-                      <text x="69" y="78" fill="#e8eaf0" fontSize={2}>橙三角 气象站</text>
-                      <text x="69" y="82" fill="#e8eaf0" fontSize={2}>绿环 植物监测</text>
-                      <text x="69" y="86" fill="#e8eaf0" fontSize={2}>红方块 电磁阀</text>
-                      <text x="69" y="90" fill="#e8eaf0" fontSize={2}>蓝六边形 水泵</text>
-                      <text x="69" y="94" fill="#e8eaf0" fontSize={2}>黄菱形 流量计</text>
-                    </g>
+                    );
+                    })}
                   </svg>
+
+                  <div className="site-canvas-legend">
+                    <span>图例</span>
+                    <i className="dot blue" />土壤/设备
+                    <i className="dot orange" />气象站
+                    <i className="dot green" />植物监测
+                    <i className="dot red" />阀门
+                    <i className="dot yellow" />流量计
+                  </div>
                 </div>
               </div>
             </div>
