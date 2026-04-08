@@ -936,13 +936,13 @@ const SiteModal: React.FC<SiteModalProps> = ({ open, initialSite, onCancel, onSa
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: '420px minmax(0, 1fr)',
+                gridTemplateColumns: 'minmax(480px, 0.95fr) minmax(0, 1.45fr)',
                 gap: 18,
                 alignItems: 'start',
                 minHeight: 780,
               }}
             >
-              <div style={{ display: 'grid', gap: 14, minWidth: 0 }}>
+              <div style={{ display: 'grid', gap: 14, minWidth: 0, overflow: 'hidden', position: 'relative', zIndex: 3 }}>
                 <div
                   style={{
                     border: '1px solid var(--border-base)',
@@ -961,12 +961,13 @@ const SiteModal: React.FC<SiteModalProps> = ({ open, initialSite, onCancel, onSa
                 </div>
 
                 <Table<Sensor>
+                  className="site-sensor-table"
                   size="small"
                   rowKey="id"
                   columns={sensorColumns}
                   dataSource={sensors}
                   pagination={false}
-                  scroll={{ x: 900, y: 520 }}
+                  scroll={{ x: 760, y: 520 }}
                 />
 
                 <Button type="dashed" style={{ width: '100%' }} onClick={() => onAddSensor(quickAddType ?? 'soil_moisture')}>
@@ -974,7 +975,7 @@ const SiteModal: React.FC<SiteModalProps> = ({ open, initialSite, onCancel, onSa
                 </Button>
               </div>
 
-              <div style={{ display: 'grid', gap: 14, minWidth: 0 }}>
+              <div style={{ display: 'grid', gap: 14, minWidth: 0, position: 'relative', zIndex: 1 }}>
                 <div
                   style={{
                     display: 'grid',

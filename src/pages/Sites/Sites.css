@@ -65,6 +65,7 @@
   padding: 16px 20px 84px;
   max-height: 84vh;
   overflow: auto;
+  overflow-x: hidden;
 }
 
 .site-modal-actions {
@@ -81,6 +82,21 @@
 
 .site-step-panel {
   margin-top: 16px;
+}
+
+.site-sensor-table {
+  width: 100%;
+}
+
+.site-sensor-table .ant-table-container,
+.site-sensor-table .ant-table-content,
+.site-sensor-table .ant-table-header,
+.site-sensor-table .ant-table-body {
+  max-width: 100%;
+}
+
+.site-sensor-table .ant-table-content {
+  overflow-x: auto !important;
 }
 
 .site-plant-recommend {
