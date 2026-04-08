@@ -1,55 +1,17 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Row, Col, Tag } from 'antd';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Tag } from 'antd';
 import { FullscreenOutlined, FullscreenExitOutlined, ReloadOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
-import { mockMapSites, mockHistoryData, mockHistoryTimestamps } from '../../mock';
-
-// ── Particle canvas ────────────────────────────────────────────────────────
-const ParticleCanvas: React.FC = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d')!;
-    let w = (canvas.width = window.innerWidth);
-    let h = (canvas.height = window.innerHeight);
-    const pts = Array.from({ length: 70 }, () => ({
-      x: Math.random() * w, y: Math.random() * h,
-      vx: (Math.random() - 0.5) * 0.35, vy: (Math.random() - 0.5) * 0.35,
-      r: Math.random() * 1.4 + 0.4, a: Math.random() * 0.35 + 0.08,
-    }));
-    let raf: number;
-    const draw = () => {
-      ctx.clearRect(0, 0, w, h);
-      pts.forEach(p => {
-        p.x += p.vx; p.y += p.vy;
-        if (p.x < 0 || p.x > w) p.vx *= -1;
-        if (p.y < 0 || p.y > h) p.vy *= -1;
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(0,212,170,${p.a})`; ctx.fill();
-      });
-      for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
-        const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
-        const d = Math.sqrt(dx * dx + dy * dy);
-        if (d < 90) { ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y); ctx.strokeStyle = `rgba(0,212,170,${0.07 * (1 - d / 90)})`; ctx.lineWidth = 0.5; ctx.stroke(); }
-      }
-      raf = requestAnimationFrame(draw);
-    };
-    draw();
-    const onResize = () => { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; };
-    window.addEventListener('resize', onResize);
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', onResize); };
-  }, []);
-  return <canvas ref={canvasRef} style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }} />;
-};
+import { mockMapSites, mockHistoryData, mockHistoryTimestamps, type MapSite } from '../../mock';
+import './Screen.css';
 
 const jitter = (v: number, p = 0.03) => +(v * (1 + (Math.random() - 0.5) * p)).toFixed(2);
 
-const statusConfig: Record<string, { color: string; label: string }> = {
-  irrigating: { color: '#00d4aa', label: '灌溉中' },
-  standby:    { color: '#ffd32a', label: '待机' },
-  alarm:      { color: '#ff4757', label: '报警' },
-  offline:    { color: '#4a5568', label: '离线' },
+const statusConfig: Record<MapSite['status'], { color: string; zh: string; en: string; tagColor: 'success' | 'warning' | 'error' | 'default' }> = {
+  irrigating: { color: '#1366ff', zh: '灌溉中', en: 'Irrigating', tagColor: 'success' },
+  standby: { color: '#5f84c8', zh: '待机', en: 'Standby', tagColor: 'warning' },
+  alarm: { color: '#cf4453', zh: '报警', en: 'Alarm', tagColor: 'error' },
+  offline: { color: '#94a3b8', zh: '离线', en: 'Offline', tagColor: 'default' },
 };
 
 const Screen: React.FC = () => {
@@ -59,173 +21,294 @@ const Screen: React.FC = () => {
 
   useEffect(() => {
     const iv = setInterval(() => {
-      setCountdown(c => { if (c <= 1) { setTick(t => t + 1); return 5; } return c - 1; });
+      setCountdown((c) => {
+        if (c <= 1) {
+          setTick((t) => t + 1);
+          return 5;
+        }
+        return c - 1;
+      });
     }, 1000);
     return () => clearInterval(iv);
   }, []);
 
+  useEffect(() => {
+    const onFullscreenChange = () => setFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
+  }, []);
+
   const toggleFS = useCallback(() => {
-    if (!document.fullscreenElement) { document.documentElement.requestFullscreen?.(); setFullscreen(true); }
-    else { document.exitFullscreen?.(); setFullscreen(false); }
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.();
+    } else {
+      document.exitFullscreen?.();
+    }
+  }, []);
+
+  const refreshNow = useCallback(() => {
+    setTick((t) => t + 1);
+    setCountdown(5);
   }, []);
 
   const soilOpt = {
     backgroundColor: 'transparent',
-    grid: { top: 28, right: 8, bottom: 28, left: 46 },
-    tooltip: { trigger: 'axis', backgroundColor: '#1a1d2e', borderColor: '#2a2d3e', textStyle: { color: '#e8eaf0' } },
-    legend: { data: ['20cm', '40cm', '60cm'], textStyle: { color: '#8892a4', fontSize: 10 }, top: 0, right: 0 },
-    xAxis: { type: 'category', data: mockHistoryTimestamps.slice(-12).map((t: string) => t.slice(11, 16)), axisLine: { lineStyle: { color: '#2a2d3e' } }, axisTick: { show: false }, axisLabel: { color: '#8892a4', fontSize: 9 }, splitLine: { show: false } },
-    yAxis: { type: 'value', axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: '#8892a4', fontSize: 9 }, splitLine: { lineStyle: { color: '#2a2d3e', type: 'dashed' } } },
+    grid: { top: 32, right: 10, bottom: 36, left: 50 },
+    tooltip: { trigger: 'axis', backgroundColor: 'rgba(15,23,42,0.96)', borderColor: 'rgba(255,255,255,0.14)', textStyle: { color: '#f4f8ff' } },
+    legend: { data: ['20cm', '40cm', '60cm'], top: 0, textStyle: { color: '#64748b', fontSize: 11 } },
+    xAxis: {
+      type: 'category',
+      data: mockHistoryTimestamps.slice(-12).map((t: string) => t.slice(11, 16)),
+      axisLine: { lineStyle: { color: 'rgba(100,116,139,0.26)' } },
+      axisTick: { show: false },
+      axisLabel: { color: '#64748b', fontSize: 10 },
+      splitLine: { show: false },
+    },
+    yAxis: {
+      type: 'value',
+      name: '%',
+      nameTextStyle: { color: '#64748b', fontSize: 10 },
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { color: '#64748b', fontSize: 10 },
+      splitLine: { lineStyle: { color: 'rgba(100,116,139,0.2)', type: 'dashed' } },
+    },
     series: [
-      { name: '20cm', type: 'line', smooth: true, data: mockHistoryData.soil_moisture_20cm.slice(-12).map((v: number) => jitter(v)), lineStyle: { color: '#00d4aa', width: 2 }, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(0,212,170,0.3)' }, { offset: 1, color: 'rgba(0,212,170,0.02)' }] } }, symbol: 'none' },
-      { name: '40cm', type: 'line', smooth: true, data: mockHistoryData.soil_moisture_40cm.slice(-12).map((v: number) => jitter(v)), lineStyle: { color: '#4f9cf9', width: 2 }, symbol: 'none' },
-      { name: '60cm', type: 'line', smooth: true, data: mockHistoryData.soil_moisture_60cm.slice(-12).map((v: number) => jitter(v)), lineStyle: { color: '#ff6b35', width: 2 }, symbol: 'none' },
+      { name: '20cm', type: 'line', smooth: true, data: mockHistoryData.soil_moisture_20cm.slice(-12).map((v: number) => jitter(v)), lineStyle: { color: '#1366ff', width: 2 }, symbol: 'none' },
+      { name: '40cm', type: 'line', smooth: true, data: mockHistoryData.soil_moisture_40cm.slice(-12).map((v: number) => jitter(v)), lineStyle: { color: '#3d7dff', width: 2 }, symbol: 'none' },
+      { name: '60cm', type: 'line', smooth: true, data: mockHistoryData.soil_moisture_60cm.slice(-12).map((v: number) => jitter(v)), lineStyle: { color: '#8fb3ea', width: 2 }, symbol: 'none' },
     ],
   };
 
   const flowOpt = {
     backgroundColor: 'transparent',
-    grid: { top: 16, right: 8, bottom: 28, left: 46 },
-    tooltip: { trigger: 'axis', backgroundColor: '#1a1d2e', borderColor: '#2a2d3e', textStyle: { color: '#e8eaf0' } },
-    xAxis: { type: 'category', data: mockHistoryTimestamps.slice(-12).map((t: string) => t.slice(11, 16)), axisLine: { lineStyle: { color: '#2a2d3e' } }, axisTick: { show: false }, axisLabel: { color: '#8892a4', fontSize: 9 }, splitLine: { show: false } },
-    yAxis: { type: 'value', name: 'g/h', nameTextStyle: { color: '#8892a4', fontSize: 9 }, axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: '#8892a4', fontSize: 9 }, splitLine: { lineStyle: { color: '#2a2d3e', type: 'dashed' } } },
-    series: [{ type: 'line', smooth: true, data: mockHistoryData.sap_flow_rate.slice(-12).map((v: number) => jitter(v)), lineStyle: { color: '#00d4aa', width: 2 }, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(0,212,170,0.35)' }, { offset: 1, color: 'rgba(0,212,170,0.02)' }] } }, symbol: 'none' }],
+    grid: { top: 24, right: 10, bottom: 32, left: 50 },
+    tooltip: { trigger: 'axis', backgroundColor: 'rgba(15,23,42,0.96)', borderColor: 'rgba(255,255,255,0.14)', textStyle: { color: '#f4f8ff' } },
+    xAxis: {
+      type: 'category',
+      data: mockHistoryTimestamps.slice(-12).map((t: string) => t.slice(11, 16)),
+      axisLine: { lineStyle: { color: 'rgba(100,116,139,0.26)' } },
+      axisTick: { show: false },
+      axisLabel: { color: '#64748b', fontSize: 10 },
+      splitLine: { show: false },
+    },
+    yAxis: {
+      type: 'value',
+      name: 'g/h',
+      nameTextStyle: { color: '#64748b', fontSize: 10 },
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { color: '#64748b', fontSize: 10 },
+      splitLine: { lineStyle: { color: 'rgba(100,116,139,0.2)', type: 'dashed' } },
+    },
+    series: [
+      {
+        type: 'line',
+        smooth: true,
+        data: mockHistoryData.sap_flow_rate.slice(-12).map((v: number) => jitter(v)),
+        lineStyle: { color: '#1366ff', width: 2.4 },
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(19,102,255,0.18)' },
+              { offset: 1, color: 'rgba(19,102,255,0.02)' },
+            ],
+          },
+        },
+        symbol: 'none',
+      },
+    ],
   };
 
   const radarOpt = {
     backgroundColor: 'transparent',
     radar: {
-      indicator: mockMapSites.map((s: any) => ({ name: s.name.slice(0, 5), max: 45 })),
-      axisLine: { lineStyle: { color: '#2a2d3e' } }, splitLine: { lineStyle: { color: '#2a2d3e' } },
-      splitArea: { areaStyle: { color: ['rgba(0,212,170,0.03)', 'rgba(0,212,170,0.01)'] } },
-      name: { textStyle: { color: '#8892a4', fontSize: 9 } },
+      indicator: mockMapSites.map((_, i: number) => ({ name: `S${i + 1}`, max: 45 })),
+      splitNumber: 4,
+      axisLine: { lineStyle: { color: 'rgba(100,116,139,0.2)' } },
+      splitLine: { lineStyle: { color: 'rgba(100,116,139,0.2)' } },
+      splitArea: { areaStyle: { color: ['rgba(19,102,255,0.03)', 'rgba(19,102,255,0.01)'] } },
+      axisName: { color: '#64748b', fontSize: 10 },
     },
-    series: [{ type: 'radar', data: [{ value: mockMapSites.map((s: any) => jitter(s.soilMoisture)), name: '含水率', areaStyle: { color: 'rgba(0,212,170,0.2)' }, lineStyle: { color: '#00d4aa' }, itemStyle: { color: '#00d4aa' } }] }],
+    series: [
+      {
+        type: 'radar',
+        data: [
+          {
+            value: mockMapSites.map((s: MapSite) => jitter(s.soilMoisture)),
+            name: 'Soil Moisture',
+            areaStyle: { color: 'rgba(19,102,255,0.15)' },
+            lineStyle: { color: '#1366ff' },
+            itemStyle: { color: '#1366ff' },
+          },
+        ],
+      },
+    ],
   };
 
   const pieOpt = {
     backgroundColor: 'transparent',
-    tooltip: { trigger: 'item', backgroundColor: '#1a1d2e', borderColor: '#2a2d3e', textStyle: { color: '#e8eaf0' } },
-    legend: { orient: 'vertical', right: 0, top: 'center', textStyle: { color: '#8892a4', fontSize: 10 } },
-    series: [{ type: 'pie', radius: ['45%', '70%'], center: ['40%', '50%'], label: { show: false }, emphasis: { label: { show: true, color: '#e8eaf0', fontSize: 11 } }, data: [{ value: 3, name: '严重', itemStyle: { color: '#ff4757' } }, { value: 7, name: '警告', itemStyle: { color: '#ff6b35' } }, { value: 12, name: '提示', itemStyle: { color: '#ffd32a' } }, { value: 28, name: '已处理', itemStyle: { color: '#2a2d3e' } }] }],
+    tooltip: { trigger: 'item', backgroundColor: 'rgba(15,23,42,0.96)', borderColor: 'rgba(255,255,255,0.14)', textStyle: { color: '#f4f8ff' } },
+    legend: { orient: 'vertical', right: 0, top: 'center', textStyle: { color: '#64748b', fontSize: 10 } },
+    series: [
+      {
+        type: 'pie',
+        radius: ['46%', '72%'],
+        center: ['37%', '50%'],
+        label: { show: false },
+        data: [
+          { value: 3, name: '严重 / Critical', itemStyle: { color: '#cf4453' } },
+          { value: 7, name: '警告 / Warning', itemStyle: { color: '#db7f2f' } },
+          { value: 12, name: '提示 / Notice', itemStyle: { color: '#c7962f' } },
+          { value: 28, name: '已处理 / Resolved', itemStyle: { color: '#94a3b8' } },
+        ],
+      },
+    ],
   };
 
   const topStats = [
-    { label: '今日灌溉量', value: `${jitter(142.6, 0.05)} m³`, color: '#00d4aa' },
-    { label: '活跃站点', value: `${mockMapSites.filter((s: any) => s.status !== 'offline').length}/${mockMapSites.length}`, color: '#4f9cf9' },
-    { label: '平均液流速率', value: `${jitter(112.4, 0.04)} g/h`, color: '#ff6b35' },
-    { label: '平均土壤含水率', value: `${jitter(27.8, 0.03)}%`, color: '#ffd32a' },
-    { label: '未处理报警', value: '3 条', color: '#ff4757' },
-    { label: '节水率', value: `${jitter(18.5, 0.02)}%`, color: '#a55eea' },
+    { zh: '今日灌溉量', en: 'Today Irrigation', value: `${jitter(142.6, 0.05)} m³`, color: '#1366ff' },
+    { zh: '活跃站点', en: 'Active Sites', value: `${mockMapSites.filter((s: MapSite) => s.status !== 'offline').length}/${mockMapSites.length}`, color: '#2f74ec' },
+    { zh: '平均液流速率', en: 'Avg Sap Flow', value: `${jitter(112.4, 0.04)} g/h`, color: '#4d84d6' },
+    { zh: '平均土壤含水率', en: 'Avg Moisture', value: `${jitter(27.8, 0.03)}%`, color: '#5f84c8' },
+    { zh: '未处理报警', en: 'Open Alerts', value: '3', color: '#cf4453' },
+    { zh: '节水率', en: 'Water Saving', value: `${jitter(18.5, 0.02)}%`, color: '#475569' },
   ];
 
   return (
-    <div style={{ minHeight: '100vh', background: '#050810', color: '#e8eaf0', position: 'relative', overflow: 'hidden' }}>
-      <ParticleCanvas />
+    <div className="screen-page">
+      <div className="screen-atmosphere" />
 
-      {/* Header */}
-      <div style={{ position: 'relative', zIndex: 1, padding: '14px 24px', borderBottom: '1px solid rgba(0,212,170,0.15)', background: 'rgba(5,8,16,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ fontSize: 12, color: '#8892a4' }}>{new Date().toLocaleString('zh-CN')}</div>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 22, fontWeight: 800, background: 'linear-gradient(90deg,#00d4aa,#4f9cf9)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: 4 }}>智灌云 · 数据大屏</div>
-          <div style={{ fontSize: 10, color: '#8892a4', letterSpacing: 2 }}>SMART IRRIGATION DATA DASHBOARD</div>
+      <header className="screen-header">
+        <div className="screen-time">{new Date().toLocaleString('zh-CN')}</div>
+        <div className="screen-title-wrap">
+          <h1 className="screen-title-zh">智慧灌溉数据大屏</h1>
+          <p className="screen-title-en">SMART IRRIGATION COMMAND WALL</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 12, color: '#8892a4' }}><ReloadOutlined spin={countdown <= 1} style={{ marginRight: 4 }} />{countdown}s 刷新</span>
-          <span onClick={toggleFS} style={{ cursor: 'pointer', color: '#8892a4', fontSize: 18 }}>{fullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}</span>
+        <div className="screen-actions">
+          <button type="button" className="screen-action-btn" onClick={refreshNow}>
+            <ReloadOutlined spin={countdown <= 1} />
+            <span className="screen-action-label-zh">刷新</span>
+            <span className="screen-action-label-en">Refresh {countdown}s</span>
+          </button>
+          <button type="button" className="screen-action-icon" onClick={toggleFS}>
+            {fullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
+          </button>
         </div>
-      </div>
+      </header>
 
-      {/* Stats */}
-      <div style={{ position: 'relative', zIndex: 1, padding: '10px 16px 0' }}>
-        <Row gutter={10}>
-          {topStats.map(s => (
-            <Col key={s.label} flex="auto">
-              <div style={{ textAlign: 'center', padding: '8px 6px', background: 'rgba(26,29,46,0.7)', border: `1px solid ${s.color}33`, borderRadius: 8, backdropFilter: 'blur(4px)' }}>
-                <div className="stat-number" style={{ fontSize: 18, fontWeight: 800, color: s.color }}>{s.value}</div>
-                <div style={{ fontSize: 10, color: '#8892a4', marginTop: 2 }}>{s.label}</div>
-              </div>
-            </Col>
-          ))}
-        </Row>
-      </div>
+      <section className="screen-stats-grid">
+        {topStats.map((s) => (
+          <article key={s.zh} className="screen-stat-panel">
+            <div className="screen-stat-value stat-number" style={{ color: s.color }}>{s.value}</div>
+            <div className="screen-stat-zh">{s.zh}</div>
+            <div className="screen-stat-en">{s.en}</div>
+          </article>
+        ))}
+      </section>
 
-      {/* Charts */}
-      <div style={{ position: 'relative', zIndex: 1, padding: '10px 16px 0' }}>
-        <Row gutter={10}>
-          <Col xs={24} lg={8}>
-            <div style={{ background: 'rgba(26,29,46,0.7)', border: '1px solid #2a2d3e', borderRadius: 8, padding: '10px 10px 6px', marginBottom: 10, backdropFilter: 'blur(4px)' }}>
-              <div style={{ fontSize: 11, color: '#8892a4', marginBottom: 4, fontWeight: 600 }}>土壤含水率 · 实时滚动</div>
-              <ReactECharts key={tick} option={soilOpt} style={{ height: 170 }} />
-            </div>
-            <div style={{ background: 'rgba(26,29,46,0.7)', border: '1px solid #2a2d3e', borderRadius: 8, padding: '10px 10px 6px', backdropFilter: 'blur(4px)' }}>
-              <div style={{ fontSize: 11, color: '#8892a4', marginBottom: 4, fontWeight: 600 }}>液流速率 · 实时滚动</div>
-              <ReactECharts key={tick + 100} option={flowOpt} style={{ height: 150 }} />
-            </div>
-          </Col>
+      <section className="screen-main-grid">
+        <div className="screen-column">
+          <article className="screen-panel">
+            <h3 className="screen-panel-title">
+              <span>土壤含水率</span>
+              <small>Soil Moisture</small>
+            </h3>
+            <ReactECharts key={tick} option={soilOpt} style={{ height: 220 }} />
+          </article>
 
-          <Col xs={24} lg={8}>
-            <div style={{ background: 'rgba(26,29,46,0.7)', border: '1px solid rgba(0,212,170,0.2)', borderRadius: 8, padding: 14, backdropFilter: 'blur(4px)', height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ fontSize: 11, color: '#8892a4', marginBottom: 8, fontWeight: 600 }}>站点分布 · 实时状态</div>
-              <svg viewBox="0 0 400 280" style={{ flex: 1, width: '100%' }}>
-                {[60, 120, 180, 240, 300, 360].map(x => <line key={x} x1={x} y1={0} x2={x} y2={280} stroke="#1e2235" strokeWidth="0.8" />)}
-                {[56, 112, 168, 224].map(y => <line key={y} x1={0} y1={y} x2={400} y2={y} stroke="#1e2235" strokeWidth="0.8" />)}
-                {mockMapSites.map((site: any) => {
-                  const x = 40 + (site.lng - 111) * 14;
-                  const y = 260 - (site.lat - 35) * 18;
-                  const cfg = statusConfig[site.status];
-                  return (
-                    <g key={site.id}>
-                      <circle cx={x} cy={y} r="16" fill={cfg.color} opacity="0.07" />
-                      <circle cx={x} cy={y} r="8" fill={cfg.color} opacity="0.85" />
-                      <circle cx={x} cy={y} r="4" fill={cfg.color} />
-                      <text x={x + 12} y={y - 4} fill="#8892a4" fontSize="8">{site.name.slice(0, 7)}</text>
-                      <text x={x + 12} y={y + 7} fill={cfg.color} fontSize="8">{cfg.label} {jitter(site.soilMoisture, 0.03)}%</text>
-                    </g>
-                  );
-                })}
-              </svg>
-              <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 6 }}>
-                {Object.entries(statusConfig).map(([k, v]) => (
-                  <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: v.color }} />
-                    <span style={{ fontSize: 9, color: '#8892a4' }}>{v.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Col>
+          <article className="screen-panel">
+            <h3 className="screen-panel-title">
+              <span>液流速率</span>
+              <small>Sap Flow</small>
+            </h3>
+            <ReactECharts key={tick + 100} option={flowOpt} style={{ height: 198 }} />
+          </article>
+        </div>
 
-          <Col xs={24} lg={8}>
-            <div style={{ background: 'rgba(26,29,46,0.7)', border: '1px solid #2a2d3e', borderRadius: 8, padding: '10px 10px 6px', marginBottom: 10, backdropFilter: 'blur(4px)' }}>
-              <div style={{ fontSize: 11, color: '#8892a4', marginBottom: 4, fontWeight: 600 }}>各站点土壤含水率（雷达图）</div>
-              <ReactECharts key={tick + 200} option={radarOpt} style={{ height: 170 }} />
-            </div>
-            <div style={{ background: 'rgba(26,29,46,0.7)', border: '1px solid #2a2d3e', borderRadius: 8, padding: '10px 10px 6px', backdropFilter: 'blur(4px)' }}>
-              <div style={{ fontSize: 11, color: '#8892a4', marginBottom: 4, fontWeight: 600 }}>报警统计分布</div>
-              <ReactECharts key={tick + 300} option={pieOpt} style={{ height: 150 }} />
-            </div>
-          </Col>
-        </Row>
-
-        {/* Bottom site grid */}
-        <div style={{ marginTop: 10, background: 'rgba(26,29,46,0.7)', border: '1px solid #2a2d3e', borderRadius: 8, padding: '10px 14px', backdropFilter: 'blur(4px)' }}>
-          <div style={{ fontSize: 11, color: '#8892a4', marginBottom: 8, fontWeight: 600 }}>站点实时数据汇总</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8 }}>
-            {mockMapSites.map((site: any) => {
+        <article className="screen-panel screen-map-panel">
+          <h3 className="screen-panel-title">
+            <span>站点分布</span>
+            <small>Site Distribution</small>
+          </h3>
+          <svg viewBox="0 0 400 250" className="screen-map-plot">
+            {[50, 100, 150, 200, 250, 300, 350].map((x) => (
+              <line key={x} x1={x} y1={0} x2={x} y2={250} stroke="rgba(100,116,139,0.18)" strokeWidth="0.8" />
+            ))}
+            {[50, 100, 150, 200].map((y) => (
+              <line key={y} x1={0} y1={y} x2={400} y2={y} stroke="rgba(100,116,139,0.18)" strokeWidth="0.8" />
+            ))}
+            {mockMapSites.map((site: MapSite, i: number) => {
+              const x = 40 + (site.lng - 111) * 14;
+              const y = 230 - (site.lat - 35) * 16;
               const cfg = statusConfig[site.status];
               return (
-                <div key={site.id} style={{ padding: '8px 10px', background: 'rgba(0,0,0,0.3)', borderRadius: 6, border: `1px solid ${cfg.color}33` }}>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: '#e8eaf0', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{site.name}</div>
-                  <div style={{ fontSize: 9, color: '#8892a4' }}>液流 <span style={{ color: '#00d4aa' }}>{jitter(site.sapFlowRate, 0.04)} g/h</span></div>
-                  <div style={{ fontSize: 9, color: '#8892a4' }}>水分 <span style={{ color: '#4f9cf9' }}>{jitter(site.soilMoisture, 0.03)}%</span></div>
-                  <Tag color={site.status === 'irrigating' ? 'success' : site.status === 'alarm' ? 'error' : site.status === 'offline' ? 'default' : 'warning'} style={{ fontSize: 9, marginTop: 3, padding: '0 4px', lineHeight: '16px' }}>{cfg.label}</Tag>
+                <g key={site.id}>
+                  <circle cx={x} cy={y} r="12" fill={cfg.color} opacity="0.12" />
+                  <circle cx={x} cy={y} r="5" fill={cfg.color} />
+                  <text x={x + 10} y={y + 3} fill="#64748b" fontSize="9">S{i + 1}</text>
+                </g>
+              );
+            })}
+          </svg>
+
+          <div className="screen-site-grid">
+            {mockMapSites.map((site: MapSite, i: number) => {
+              const cfg = statusConfig[site.status];
+              return (
+                <div key={site.id} className="screen-site-card">
+                  <div className="screen-site-name">站点 S{i + 1} <span>Site S{i + 1}</span></div>
+                  <div className="screen-site-plant">{site.plantType}</div>
+                  <Tag color={cfg.tagColor} style={{ marginTop: 6, marginRight: 0 }}>{cfg.zh} / {cfg.en}</Tag>
                 </div>
               );
             })}
           </div>
+        </article>
+
+        <div className="screen-column">
+          <article className="screen-panel">
+            <h3 className="screen-panel-title">
+              <span>含水率雷达</span>
+              <small>Moisture Radar</small>
+            </h3>
+            <ReactECharts key={tick + 200} option={radarOpt} style={{ height: 220 }} />
+          </article>
+
+          <article className="screen-panel">
+            <h3 className="screen-panel-title">
+              <span>报警分布</span>
+              <small>Alert Distribution</small>
+            </h3>
+            <ReactECharts key={tick + 300} option={pieOpt} style={{ height: 198 }} />
+          </article>
         </div>
-      </div>
+      </section>
+
+      <section className="screen-panel screen-summary-panel">
+        <h3 className="screen-panel-title">
+          <span>站点实时摘要</span>
+          <small>Real-time Site Summary</small>
+        </h3>
+        <div className="screen-summary-grid">
+          {mockMapSites.map((site: MapSite, i: number) => {
+            const cfg = statusConfig[site.status];
+            return (
+              <div key={site.id} className="screen-summary-item" style={{ borderColor: `${cfg.color}55` }}>
+                <div className="screen-summary-name">站点 S{i + 1} <span>Site S{i + 1}</span></div>
+                <div className="screen-summary-line">液流 / Flow <strong>{jitter(site.sapFlowRate, 0.04)} g/h</strong></div>
+                <div className="screen-summary-line">水分 / Moisture <strong>{jitter(site.soilMoisture, 0.03)}%</strong></div>
+                <Tag color={cfg.tagColor} style={{ fontSize: 10, marginTop: 6, marginRight: 0 }}>{cfg.en}</Tag>
+              </div>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 };

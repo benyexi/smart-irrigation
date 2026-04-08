@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, message } from 'antd';
-import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import {
+  UserOutlined,
+  LockOutlined,
+  ArrowRightOutlined,
+} from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import './Login.css';
 
 const Login: React.FC = () => {
   const { login } = useAuth();
@@ -13,46 +18,97 @@ const Login: React.FC = () => {
     setLoading(true);
     setTimeout(() => {
       const ok = login(username, password);
-      if (ok) { navigate('/dashboard'); }
-      else { message.error('账号或密码错误'); setLoading(false); }
+      if (ok) {
+        navigate('/dashboard');
+      } else {
+        message.error('账号或密码错误');
+        setLoading(false);
+      }
     }, 600);
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-      <svg style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', opacity: 0.18 }} viewBox="0 0 1440 320" preserveAspectRatio="none">
-        <defs><linearGradient id="wg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#00d4aa"/><stop offset="100%" stopColor="#4f9cf9"/></linearGradient></defs>
-        <path fill="url(#wg)" d="M0,160L48,176C96,192,192,224,288,213.3C384,203,480,149,576,138.7C672,128,768,160,864,181.3C960,203,1056,213,1152,197.3C1248,181,1344,139,1392,117.3L1440,96L1440,320L0,320Z"/>
-      </svg>
-      <svg style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', opacity: 0.08 }} viewBox="0 0 1440 320" preserveAspectRatio="none">
-        <path fill="#4f9cf9" d="M0,256L60,240C120,224,240,192,360,186.7C480,181,600,203,720,213.3C840,224,960,224,1080,208C1200,192,1320,160,1380,144L1440,128L1440,320L0,320Z"/>
-      </svg>
-      {[...Array(10)].map((_, i) => (
-        <div key={i} style={{ position: 'absolute', width: 3+i%3, height: 3+i%3, borderRadius: '50%', background: i%2===0?'var(--primary)':'var(--accent-blue)', opacity: 0.35, left: `${8+i*9}%`, top: `${15+(i%4)*18}%`, boxShadow: `0 0 8px ${i%2===0?'#00d4aa':'#4f9cf9'}` }} />
-      ))}
-      <div style={{ width: 400, background: 'var(--bg-card)', border: '1px solid var(--border-base)', borderRadius: 'var(--radius-lg)', padding: '40px 36px', boxShadow: '0 8px 40px rgba(0,0,0,0.5),0 0 60px rgba(0,212,170,0.08)', position: 'relative', zIndex: 1 }}>
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <svg width="52" height="52" viewBox="0 0 52 52" fill="none" style={{ display: 'block', margin: '0 auto 12px' }}>
-            <path d="M26 4 C26 4, 10 22, 10 32 A16 16 0 0 0 42 32 C42 22 26 4 26 4Z" fill="url(#ld)"/>
-            <defs><linearGradient id="ld" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#00d4aa"/><stop offset="100%" stopColor="#4f9cf9"/></linearGradient></defs>
-          </svg>
-          <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--primary)', letterSpacing: 2 }}>智灌云</div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4, letterSpacing: 1 }}>Smart Irrigation Platform</div>
+    <div className="login-page">
+      <div className="login-bg-orb orb-a" />
+      <div className="login-bg-orb orb-b" />
+
+      <section className="login-card">
+        <div className="login-brand-row">
+          <div className="login-mark" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+              <defs>
+                <linearGradient id="loginMarkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#1366ff" />
+                  <stop offset="60%" stopColor="#3d7dff" />
+                  <stop offset="100%" stopColor="#6ea1ff" />
+                </linearGradient>
+              </defs>
+              <rect x="2.2" y="2.2" width="21.6" height="21.6" rx="7.4" stroke="url(#loginMarkGrad)" strokeWidth="1.4" />
+              <circle cx="9" cy="16.8" r="1.6" fill="#1366ff" />
+              <circle cx="13" cy="12.8" r="1.6" fill="#3d7dff" />
+              <circle cx="17.2" cy="8.6" r="1.6" fill="#6ea1ff" />
+              <path d="M9 16.8L13 12.8L17.2 8.6" stroke="url(#loginMarkGrad)" strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
+          </div>
+          <div>
+            <div className="login-brand-name">智灌云</div>
+            <div className="login-brand-sub">Smart Irrigation</div>
+          </div>
         </div>
-        <Form layout="vertical" onFinish={onFinish} initialValues={{ username: 'admin', password: '123456' }}>
+
+        <h1 className="login-title">
+          <span className="login-title-zh">智能灌溉决策平台</span>
+          <span className="login-title-en">Smart Irrigation Platform</span>
+        </h1>
+        <p className="login-subtitle">
+          <span className="login-subtitle-zh">面向商业化部署的实时监测与决策中枢</span>
+          <span className="login-subtitle-en">Enterprise-grade monitoring and decision core for global deployment</span>
+        </p>
+
+        <Form
+          layout="vertical"
+          onFinish={onFinish}
+          initialValues={{ username: 'admin', password: '123456' }}
+          autoComplete="off"
+          className="login-form"
+        >
           <Form.Item name="username" rules={[{ required: true }]}>
-            <Input prefix={<UserOutlined style={{ color: 'var(--text-muted)' }}/>} placeholder="账号" size="large" style={{ height: 46 }}/>
+              <Input
+                className="login-field"
+                prefix={<UserOutlined />}
+                placeholder="账号  Account"
+                size="large"
+                autoComplete="username"
+                spellCheck={false}
+            />
           </Form.Item>
           <Form.Item name="password" rules={[{ required: true }]}>
-            <Input.Password prefix={<LockOutlined style={{ color: 'var(--text-muted)' }}/>} placeholder="密码" size="large" style={{ height: 46 }}/>
-          </Form.Item>
-          <Form.Item style={{ marginBottom: 0, marginTop: 8 }}>
-            <Button type="primary" htmlType="submit" block size="large" loading={loading} style={{ height: 46, fontSize: 16, fontWeight: 700, letterSpacing: 2 }}>登 录</Button>
-          </Form.Item>
-        </Form>
-        <div style={{ textAlign: 'center', marginTop: 16, color: 'var(--text-muted)', fontSize: 12 }}>演示账号：admin | 密码：123456</div>
-      </div>
+              <Input.Password
+                className="login-field"
+                prefix={<LockOutlined />}
+                placeholder="密码  Password"
+                size="large"
+                autoComplete="current-password"
+              />
+            </Form.Item>
+            <Form.Item style={{ marginBottom: 0, marginTop: 8 }}>
+              <Button className="login-submit" type="primary" htmlType="submit" block size="large" loading={loading}>
+                <span className="login-submit-label">
+                  <span className="login-submit-zh">进入平台</span>
+                  <span className="login-submit-en">Continue</span>
+                </span>
+                <ArrowRightOutlined />
+              </Button>
+            </Form.Item>
+          </Form>
+
+        <div className="login-footer">
+          <span className="login-footer-zh">演示账号：admin  密码：123456</span>
+          <span className="login-footer-en">Demo Account: admin  Password: 123456</span>
+        </div>
+      </section>
     </div>
   );
 };
+
 export default Login;

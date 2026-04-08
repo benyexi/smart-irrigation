@@ -1,5 +1,6 @@
-// Authentication context — stores login state in sessionStorage
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, type ReactNode } from 'react';
+import { AUTH_STORAGE_KEY, readStoredUser } from './authStorage';
 
 interface AuthUser {
   username: string;
@@ -19,10 +20,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<AuthUser | null>(() => {
-    const stored = sessionStorage.getItem('auth_user');
-    return stored ? (JSON.parse(stored) as AuthUser) : null;
-  });
+  const [user, setUser] = useState<AuthUser | null>(() => readStoredUser());
 
   const login = (username: string, password: string): boolean => {
     if (username === 'admin' && password === '123456') {
@@ -35,7 +33,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         organization: '智灌云科技有限公司',
       };
       setUser(u);
-      sessionStorage.setItem('auth_user', JSON.stringify(u));
+      // Store in both scopes so existing code paths keep working.
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(u));
+      sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(u));
       return true;
     }
     return false;
@@ -43,7 +43,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     setUser(null);
-    sessionStorage.removeItem('auth_user');
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    sessionStorage.removeItem(AUTH_STORAGE_KEY);
   };
 
   return <AuthContext.Provider value={{ user, login, logout }} children={children} />;

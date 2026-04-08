@@ -17,6 +17,116 @@ import MapPage from './pages/Map/Map';
 import Engine from './pages/Engine/Engine';
 import Screen from './pages/Screen/Screen';
 
+const appTheme = {
+  algorithm: antTheme.defaultAlgorithm,
+  token: {
+    colorPrimary: '#1366ff',
+    colorInfo: '#1366ff',
+    colorSuccess: '#0f9d80',
+    colorWarning: '#c7962f',
+    colorError: '#cf4453',
+    colorLink: '#1366ff',
+    colorBgBase: '#f2f4f8',
+    colorBgLayout: '#f2f4f8',
+    colorBgContainer: '#ffffff',
+    colorBgElevated: '#ffffff',
+    colorBorder: 'rgba(15, 23, 42, 0.12)',
+    colorBorderSecondary: 'rgba(15, 23, 42, 0.08)',
+    colorText: '#111827',
+    colorTextSecondary: '#334155',
+    colorTextTertiary: '#64748b',
+    borderRadius: 12,
+    borderRadiusLG: 18,
+    borderRadiusSM: 10,
+    fontFamily: "'SF Pro Text', 'SF Pro Display', 'Inter', 'Avenir Next', 'PingFang SC', 'Hiragino Sans GB', sans-serif",
+    boxShadow:
+      '0 12px 34px rgba(15, 23, 42, 0.1), 0 0 0 1px rgba(19, 102, 255, 0.06)',
+  },
+  components: {
+    Layout: {
+      headerBg: 'rgba(248, 250, 253, 0.68)',
+      siderBg: 'rgba(248, 250, 253, 0.72)',
+      bodyBg: '#f2f4f8',
+      triggerBg: 'rgba(248, 250, 253, 0.84)',
+    },
+    Menu: {
+      itemBg: 'transparent',
+      itemHoverBg: 'rgba(19, 102, 255, 0.07)',
+      itemSelectedBg: 'rgba(19, 102, 255, 0.12)',
+      itemSelectedColor: '#1366ff',
+      itemHoverColor: '#111827',
+      itemColor: '#334155',
+      itemBorderRadius: 12,
+    },
+    Card: {
+      colorBgContainer: 'rgba(255, 255, 255, 0.82)',
+      colorBorderSecondary: 'rgba(15, 23, 42, 0.12)',
+      boxShadowTertiary:
+        '0 12px 34px rgba(15, 23, 42, 0.1), 0 0 0 1px rgba(19, 102, 255, 0.06)',
+      headerBg: 'transparent',
+    },
+    Table: {
+      colorBgContainer: 'rgba(255, 255, 255, 0.82)',
+      headerBg: '#f2f5f9',
+      borderColor: 'rgba(15, 23, 42, 0.12)',
+      rowHoverBg: 'rgba(19, 102, 255, 0.05)',
+    },
+    Input: {
+      colorBgContainer: '#f7fafd',
+      colorBorder: 'rgba(15, 23, 42, 0.14)',
+      activeBorderColor: '#1366ff',
+      hoverBorderColor: '#1366ff',
+      activeShadow: '0 0 0 3px rgba(19, 102, 255, 0.12)',
+    },
+    Select: {
+      colorBgContainer: '#f7fafd',
+      colorBorder: 'rgba(15, 23, 42, 0.14)',
+      optionSelectedBg: 'rgba(19, 102, 255, 0.12)',
+      optionActiveBg: 'rgba(19, 102, 255, 0.07)',
+    },
+    Button: {
+      colorPrimary: '#1366ff',
+      colorPrimaryHover: '#0f56d8',
+      colorPrimaryActive: '#0b48b7',
+      colorPrimaryText: '#ffffff',
+      defaultBg: 'rgba(255, 255, 255, 0.78)',
+      defaultBorderColor: 'rgba(15, 23, 42, 0.14)',
+    },
+    Modal: {
+      contentBg: '#ffffff',
+      headerBg: '#ffffff',
+      footerBg: '#ffffff',
+    },
+    Slider: {
+      trackBg: '#1366ff',
+      handleColor: '#1366ff',
+      railBg: 'rgba(15, 23, 42, 0.12)',
+    },
+    Steps: {
+      colorPrimary: '#1366ff',
+    },
+    Tabs: {
+      inkBarColor: '#1366ff',
+      itemActiveColor: '#111827',
+      itemSelectedColor: '#1366ff',
+      itemHoverColor: '#1366ff',
+    },
+    DatePicker: {
+      colorBgContainer: '#f7fafd',
+      colorBorder: 'rgba(15, 23, 42, 0.14)',
+      activeBorderColor: '#1366ff',
+    },
+    Progress: {
+      defaultColor: '#1366ff',
+      remainingColor: 'rgba(15, 23, 42, 0.1)',
+    },
+    Badge: {
+      indicatorHeight: 8,
+      statusSize: 8,
+    },
+  },
+};
+
 const RequireAuth = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   return user ? <>{children}</> : <Navigate to="/login" replace />;
@@ -53,39 +163,7 @@ const AppRoutes: React.FC = () => (
 const App: React.FC = () => (
   <ConfigProvider
     locale={zhCN}
-    theme={{
-      algorithm: antTheme.darkAlgorithm,
-      token: {
-        colorPrimary: '#00d4aa',
-        colorLink: '#00d4aa',
-        colorBgBase: '#0f1117',
-        colorBgContainer: '#1a1d2e',
-        colorBgElevated: '#1a1d2e',
-        colorBorder: '#2a2d3e',
-        colorBorderSecondary: '#2a2d3e',
-        colorText: '#e8eaf0',
-        colorTextSecondary: '#8892a4',
-        colorTextTertiary: '#4a5568',
-        borderRadius: 8,
-        borderRadiusLG: 12,
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif",
-      },
-      components: {
-        Layout: { headerBg: '#141720', siderBg: '#141720', bodyBg: '#0f1117' },
-        Menu: { darkItemBg: 'transparent', darkSubMenuItemBg: 'transparent', darkItemSelectedBg: 'rgba(0,212,170,0.12)', itemSelectedColor: '#00d4aa', itemHoverColor: '#e8eaf0', itemColor: '#8892a4' },
-        Card: { colorBgContainer: '#1a1d2e', colorBorderSecondary: '#2a2d3e' },
-        Table: { colorBgContainer: '#1a1d2e', headerBg: '#1e2235', borderColor: '#2a2d3e', rowHoverBg: '#1e2235' },
-        Input: { colorBgContainer: '#12152a', colorBorder: '#2a2d3e', activeBorderColor: '#00d4aa', hoverBorderColor: '#00d4aa' },
-        Select: { colorBgContainer: '#12152a', colorBorder: '#2a2d3e' },
-        Button: { colorPrimary: '#00d4aa', colorPrimaryHover: '#00e8bc', colorPrimaryText: '#000' },
-        Modal: { contentBg: '#1a1d2e', headerBg: '#1a1d2e' },
-        Slider: { trackBg: '#00d4aa', handleColor: '#00d4aa', railBg: '#2a2d3e' },
-        Steps: { colorPrimary: '#00d4aa' },
-        Tabs: { inkBarColor: '#00d4aa', itemActiveColor: '#00d4aa', itemSelectedColor: '#00d4aa' },
-        DatePicker: { colorBgContainer: '#12152a', colorBorder: '#2a2d3e' },
-        Progress: { defaultColor: '#00d4aa' },
-      },
-    }}
+    theme={appTheme}
   >
     <AuthProvider>
       <HashRouter>
