@@ -95,8 +95,16 @@
   max-width: 100%;
 }
 
+.site-sensor-table .ant-table-container {
+  overflow: hidden;
+}
+
 .site-sensor-table .ant-table-content {
   overflow-x: auto !important;
+}
+
+.site-sensor-table .ant-table-header {
+  overflow-x: hidden !important;
 }
 
 .site-plant-recommend {

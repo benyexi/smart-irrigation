@@ -933,16 +933,18 @@ const SiteModal: React.FC<SiteModalProps> = ({ open, initialSite, onCancel, onSa
           )}
 
           {step === 1 && (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'minmax(480px, 0.95fr) minmax(0, 1.45fr)',
-                gap: 18,
-                alignItems: 'start',
-                minHeight: 780,
-              }}
-            >
-              <div style={{ display: 'grid', gap: 14, minWidth: 0, overflow: 'hidden', position: 'relative', zIndex: 3 }}>
+            <div style={{ width: '100%', overflowX: 'auto' }}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'minmax(560px, 0.95fr) minmax(760px, 1.45fr)',
+                  gap: 18,
+                  alignItems: 'start',
+                  minHeight: 780,
+                  minWidth: 1360,
+                }}
+              >
+                <div style={{ display: 'grid', gap: 14, minWidth: 0, overflow: 'hidden' }}>
                 <div
                   style={{
                     border: '1px solid var(--border-base)',
@@ -967,7 +969,7 @@ const SiteModal: React.FC<SiteModalProps> = ({ open, initialSite, onCancel, onSa
                   columns={sensorColumns}
                   dataSource={sensors}
                   pagination={false}
-                  scroll={{ x: 760, y: 520 }}
+                  scroll={{ x: 'max-content', y: 520 }}
                 />
 
                 <Button type="dashed" style={{ width: '100%' }} onClick={() => onAddSensor(quickAddType ?? 'soil_moisture')}>
@@ -975,7 +977,7 @@ const SiteModal: React.FC<SiteModalProps> = ({ open, initialSite, onCancel, onSa
                 </Button>
               </div>
 
-              <div style={{ display: 'grid', gap: 14, minWidth: 0, position: 'relative', zIndex: 1 }}>
+                <div style={{ display: 'grid', gap: 14, minWidth: 0, position: 'relative' }}>
                 <div
                   style={{
                     display: 'grid',
@@ -1082,7 +1084,7 @@ const SiteModal: React.FC<SiteModalProps> = ({ open, initialSite, onCancel, onSa
                     borderRadius: 28,
                     border: '1px solid var(--border-base)',
                     overflow: 'hidden',
-                    background: 'linear-gradient(180deg, rgba(14, 24, 47, 0.98) 0%, rgba(9, 18, 36, 1) 100%)',
+                    background: 'linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%)',
                     boxShadow: 'var(--shadow-elevated)',
                     minHeight: 720,
                   }}
@@ -1097,15 +1099,15 @@ const SiteModal: React.FC<SiteModalProps> = ({ open, initialSite, onCancel, onSa
                         zIndex: 4,
                         padding: '10px 12px',
                         borderRadius: 14,
-                        border: '1px solid rgba(79, 156, 249, 0.25)',
-                        background: 'rgba(12, 19, 34, 0.94)',
-                        boxShadow: '0 12px 26px rgba(0, 0, 0, 0.35)',
+                        border: '1px solid rgba(19, 102, 255, 0.22)',
+                        background: 'rgba(255, 255, 255, 0.95)',
+                        boxShadow: '0 12px 26px rgba(15, 23, 42, 0.14)',
                         display: 'grid',
                         gap: 8,
                         minWidth: 210,
                       }}
                     >
-                      <div style={{ color: '#dce7ff', fontSize: 12 }}>在此处添加传感器</div>
+                      <div style={{ color: 'var(--text-primary)', fontSize: 12 }}>在此处添加传感器</div>
                       <Space wrap>
                         <Button size="small" type="primary" onClick={() => onAddSensor('soil_moisture', addSensorAt.x, addSensorAt.y)}>
                           直接添加
@@ -1129,24 +1131,24 @@ const SiteModal: React.FC<SiteModalProps> = ({ open, initialSite, onCancel, onSa
                   >
                     <defs>
                       <pattern id="field-grid" width="8" height="8" patternUnits="userSpaceOnUse">
-                        <path d="M 8 0 L 0 0 0 8" fill="none" stroke="rgba(151, 170, 204, 0.14)" strokeWidth="0.28" />
+                        <path d="M 8 0 L 0 0 0 8" fill="none" stroke="rgba(51, 65, 85, 0.12)" strokeWidth="0.28" />
                       </pattern>
                       <linearGradient id="field-surface" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="rgba(19, 102, 255, 0.14)" />
-                        <stop offset="100%" stopColor="rgba(15, 157, 128, 0.05)" />
+                        <stop offset="0%" stopColor="rgba(19, 102, 255, 0.10)" />
+                        <stop offset="100%" stopColor="rgba(15, 157, 128, 0.04)" />
                       </linearGradient>
                     </defs>
 
-                    <rect x="0" y="0" width="100" height="100" fill="#08111f" />
-                    <rect x="4" y="4" width="92" height="92" rx="8" fill="url(#field-surface)" stroke="rgba(19, 102, 255, 0.55)" strokeWidth="0.45" />
+                    <rect x="0" y="0" width="100" height="100" fill="#f7fbff" />
+                    <rect x="4" y="4" width="92" height="92" rx="8" fill="url(#field-surface)" stroke="rgba(19, 102, 255, 0.42)" strokeWidth="0.45" />
                     <rect x="4" y="4" width="92" height="92" rx="8" fill="url(#field-grid)" opacity="0.9" />
 
                     {Array.from({ length: 9 }).map((_, idx) => {
                       const pos = 10 + idx * 10;
                       return (
                         <g key={`grid-${pos}`}>
-                          <line x1={pos} y1={4} x2={pos} y2={96} stroke="rgba(135, 153, 184, 0.12)" strokeWidth={0.2} />
-                          <line x1={4} y1={pos} x2={96} y2={pos} stroke="rgba(135, 153, 184, 0.12)" strokeWidth={0.2} />
+                          <line x1={pos} y1={4} x2={pos} y2={96} stroke="rgba(51, 65, 85, 0.12)" strokeWidth={0.2} />
+                          <line x1={4} y1={pos} x2={96} y2={pos} stroke="rgba(51, 65, 85, 0.12)" strokeWidth={0.2} />
                         </g>
                       );
                     })}
@@ -1290,11 +1292,11 @@ const SiteModal: React.FC<SiteModalProps> = ({ open, initialSite, onCancel, onSa
                             width={6.2}
                             height={2.9}
                             rx={1}
-                            fill="rgba(11,18,35,0.84)"
-                            stroke="rgba(220,231,255,0.38)"
+                            fill="rgba(255,255,255,0.88)"
+                            stroke="rgba(71,85,105,0.36)"
                             strokeWidth={0.15}
                           />
-                          <text x={sensor.x} y={sensor.y + 6.05} fill="#dce7ff" fontSize={1.9} textAnchor="middle">
+                          <text x={sensor.x} y={sensor.y + 6.05} fill="#1e293b" fontSize={1.9} textAnchor="middle">
                             {label}
                           </text>
                         </g>
@@ -1313,9 +1315,9 @@ const SiteModal: React.FC<SiteModalProps> = ({ open, initialSite, onCancel, onSa
                       flexWrap: 'wrap',
                       padding: '12px 14px',
                       borderRadius: 16,
-                      background: 'rgba(9, 16, 30, 0.78)',
-                      border: '1px solid rgba(143, 179, 234, 0.14)',
-                      color: '#dce7ff',
+                      background: 'rgba(255, 255, 255, 0.80)',
+                      border: '1px solid rgba(15, 23, 42, 0.14)',
+                      color: '#1e293b',
                       fontSize: 12,
                     }}
                   >
@@ -1325,6 +1327,7 @@ const SiteModal: React.FC<SiteModalProps> = ({ open, initialSite, onCancel, onSa
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 10, height: 10, borderRadius: '50%', background: '#0f9d80', display: 'inline-block' }} />植物监测</span>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 10, height: 10, borderRadius: '50%', background: '#db7f2f', display: 'inline-block' }} />大气监测</span>
                   </div>
+                </div>
                 </div>
               </div>
             </div>
