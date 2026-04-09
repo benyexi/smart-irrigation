@@ -17,6 +17,7 @@ import Engine from './pages/Engine/Engine';
 import Screen from './pages/Screen/Screen';
 import Sites from './pages/Sites';
 import IoT from './pages/IoT/IoT';
+import Landing from './pages/Landing/Landing';
 
 const appTheme = {
   algorithm: antTheme.defaultAlgorithm,
@@ -136,6 +137,7 @@ const RequireAuth = ({ children }: { children: React.ReactNode }) => {
 const AppRoutes: React.FC = () => (
   <Routes>
     <Route path="/login" element={<Login />} />
+    <Route path="/landing" element={<Landing />} />
     {/* Data screen — standalone, no layout */}
     <Route path="/screen" element={<RequireAuth><Screen /></RequireAuth>} />
     <Route

@@ -149,6 +149,26 @@ const AppLayout: React.FC = () => {
             </>
           )}
         </div>
+
+        <div
+          onClick={() => navigate('/landing')}
+          style={{
+            padding: '8px 16px 14px',
+            flexShrink: 0,
+            cursor: 'pointer',
+            color: 'var(--text-muted)',
+            fontSize: 12,
+            lineHeight: 1.2,
+            borderTop: '1px solid var(--border-base)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, opacity: 0.82 }}>
+            <span style={{ fontSize: 13, lineHeight: 1 }}>🌐</span>
+            {!collapsed && (
+              <span style={{ letterSpacing: 0.1 }}>产品介绍</span>
+            )}
+          </div>
+        </div>
       </Sider>
 
       <Layout style={{ marginLeft: isMobile ? 0 : (collapsed ? 72 : 240), transition: 'margin-left 0.2s ease' }}>
