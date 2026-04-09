@@ -1,0 +1,51 @@
+.knowledge-page .knowledge-toolbar {
+  align-items: flex-start;
+}
+
+.knowledge-page .knowledge-table .ant-table-container {
+  overflow: hidden;
+}
+
+.knowledge-page .knowledge-table .ant-table-content {
+  scrollbar-gutter: stable;
+}
+
+.knowledge-page .knowledge-table .ant-table-thead > tr > .ant-table-cell-fix-left,
+.knowledge-page .knowledge-table .ant-table-thead > tr > .ant-table-cell-fix-right {
+  z-index: 3;
+  background: #f2f5f9 !important;
+}
+
+.knowledge-page .knowledge-table .ant-table-tbody > tr > .ant-table-cell-fix-left,
+.knowledge-page .knowledge-table .ant-table-tbody > tr > .ant-table-cell-fix-right {
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.92) !important;
+  background-clip: padding-box;
+}
+
+.knowledge-page .knowledge-table .ant-table-tbody > tr:nth-child(even) > .ant-table-cell-fix-left,
+.knowledge-page .knowledge-table .ant-table-tbody > tr:nth-child(even) > .ant-table-cell-fix-right {
+  background: rgba(255, 255, 255, 0.96) !important;
+}
+
+.knowledge-page .knowledge-table .ant-table-tbody > tr:hover > .ant-table-cell-fix-left,
+.knowledge-page .knowledge-table .ant-table-tbody > tr:hover > .ant-table-cell-fix-right {
+  background: rgba(19, 102, 255, 0.05) !important;
+}
+
+@media (max-width: 767px) {
+  .knowledge-page .knowledge-toolbar {
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .knowledge-page .knowledge-toolbar .ant-space-item,
+  .knowledge-page .knowledge-toolbar .ant-input-affix-wrapper,
+  .knowledge-page .knowledge-toolbar .ant-select {
+    width: 100% !important;
+  }
+
+  .knowledge-page .knowledge-table .ant-table {
+    font-size: 13px;
+  }
+}

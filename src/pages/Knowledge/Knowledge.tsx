@@ -4,6 +4,7 @@ import {
   Card,
   Descriptions,
   Drawer,
+  Grid,
   Input,
   Select,
   Space,
@@ -23,6 +24,7 @@ import {
   soilKnowledgeRecords,
   type SoilKnowledgeRecord,
 } from '../../mock/knowledge';
+import './Knowledge.css';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -34,14 +36,20 @@ type DrawerState =
   | { open: true; type: 'soil'; record: SoilKnowledgeRecord };
 
 const DATA_SOURCE_TEXT = '数据来源：FAO-56 / 植物水分生理学 / PWRlab实验数据';
+const PLANT_TABLE_SCROLL_X = 1742;
+const SOIL_TABLE_SCROLL_X = 1010;
+const DECISION_TABLE_SCROLL_X = 1180;
+const ALARM_TABLE_SCROLL_X = 960;
 
 const includesKeyword = (text: string, keyword: string) => text.toLowerCase().includes(keyword);
 
 const Knowledge: React.FC = () => {
+  const screens = Grid.useBreakpoint();
   const [activeTab, setActiveTab] = useState<TabKey>('plants');
   const [keyword, setKeyword] = useState('');
   const [plantCategory, setPlantCategory] = useState<'all' | PlantCategory>('all');
   const [drawerState, setDrawerState] = useState<DrawerState>({ open: false, type: null, record: null });
+  const useFixedKnowledgeColumns = Boolean(screens.lg);
 
   const normalizedKeyword = keyword.trim().toLowerCase();
 
@@ -128,7 +136,7 @@ const Knowledge: React.FC = () => {
       dataIndex: 'name',
       key: 'name',
       width: 110,
-      fixed: 'left',
+      fixed: useFixedKnowledgeColumns ? 'left' : undefined,
       sorter: (a, b) => a.name.localeCompare(b.name, 'zh-CN'),
     },
     {
@@ -209,7 +217,7 @@ const Knowledge: React.FC = () => {
       title: '详情',
       key: 'action',
       width: 80,
-      fixed: 'right',
+      fixed: useFixedKnowledgeColumns ? 'right' : undefined,
       render: (_, record) => (
         <Button type="link" size="small" onClick={() => setDrawerState({ open: true, type: 'plant', record })}>
           详情
@@ -224,7 +232,7 @@ const Knowledge: React.FC = () => {
       dataIndex: 'soilType',
       key: 'soilType',
       width: 120,
-      fixed: 'left',
+      fixed: useFixedKnowledgeColumns ? 'left' : undefined,
       sorter: (a, b) => a.soilType.localeCompare(b.soilType, 'zh-CN'),
     },
     {
@@ -274,7 +282,7 @@ const Knowledge: React.FC = () => {
       title: '详情',
       key: 'action',
       width: 80,
-      fixed: 'right',
+      fixed: useFixedKnowledgeColumns ? 'right' : undefined,
       render: (_, record) => (
         <Button type="link" size="small" onClick={() => setDrawerState({ open: true, type: 'soil', record })}>
           详情
@@ -376,11 +384,11 @@ const Knowledge: React.FC = () => {
     : '';
 
   return (
-    <div className="page-container">
+    <div className="page-container knowledge-page">
       <Title level={4} style={{ marginBottom: 16 }}>知识库</Title>
 
       <Card style={{ borderRadius: 12 }}>
-        <Space wrap style={{ width: '100%', marginBottom: 14, justifyContent: 'space-between' }}>
+        <Space wrap className="knowledge-toolbar" style={{ width: '100%', marginBottom: 14, justifyContent: 'space-between' }}>
           <Input
             value={keyword}
             onChange={(event) => setKeyword(event.target.value)}
@@ -414,12 +422,13 @@ const Knowledge: React.FC = () => {
               children: (
                 <>
                   <Table
+                    className="knowledge-table"
                     rowKey="id"
                     size="small"
                     pagination={{ pageSize: 8, showSizeChanger: false }}
                     columns={plantColumns}
                     dataSource={filteredPlants}
-                    scroll={{ x: 1900 }}
+                    scroll={{ x: PLANT_TABLE_SCROLL_X }}
                   />
                   <Paragraph style={{ marginTop: 10, marginBottom: 0 }}>
                     <Text type="secondary">{DATA_SOURCE_TEXT}</Text>
@@ -433,12 +442,13 @@ const Knowledge: React.FC = () => {
               children: (
                 <>
                   <Table
+                    className="knowledge-table"
                     rowKey="id"
                     size="small"
                     pagination={{ pageSize: 8, showSizeChanger: false }}
                     columns={soilColumns}
                     dataSource={filteredSoils}
-                    scroll={{ x: 1200 }}
+                    scroll={{ x: SOIL_TABLE_SCROLL_X }}
                   />
                   <Paragraph style={{ marginTop: 10, marginBottom: 0 }}>
                     <Text type="secondary">{DATA_SOURCE_TEXT}</Text>
@@ -454,12 +464,13 @@ const Knowledge: React.FC = () => {
                   <div>
                     <Title level={5} style={{ marginBottom: 8 }}>各决策模式适用场景对比</Title>
                     <Table
+                      className="knowledge-table"
                       rowKey="id"
                       size="small"
                       pagination={false}
                       columns={decisionModeColumns}
                       dataSource={filteredDecisionModes}
-                      scroll={{ x: 1300 }}
+                      scroll={{ x: DECISION_TABLE_SCROLL_X }}
                     />
                     <Paragraph style={{ marginTop: 10, marginBottom: 0 }}>
                       <Text type="secondary">{DATA_SOURCE_TEXT}</Text>
@@ -469,12 +480,13 @@ const Knowledge: React.FC = () => {
                   <div>
                     <Title level={5} style={{ marginBottom: 8 }}>常见报警阈值参考</Title>
                     <Table
+                      className="knowledge-table"
                       rowKey="id"
                       size="small"
                       pagination={false}
                       columns={alarmColumns}
                       dataSource={filteredAlarmThresholds}
-                      scroll={{ x: 980 }}
+                      scroll={{ x: ALARM_TABLE_SCROLL_X }}
                     />
                     <Paragraph style={{ marginTop: 10, marginBottom: 0 }}>
                       <Text type="secondary">{DATA_SOURCE_TEXT}</Text>
