@@ -4,7 +4,6 @@ import {
   Card,
   Descriptions,
   Drawer,
-  Grid,
   Input,
   Select,
   Space,
@@ -44,12 +43,10 @@ const ALARM_TABLE_SCROLL_X = 960;
 const includesKeyword = (text: string, keyword: string) => text.toLowerCase().includes(keyword);
 
 const Knowledge: React.FC = () => {
-  const screens = Grid.useBreakpoint();
   const [activeTab, setActiveTab] = useState<TabKey>('plants');
   const [keyword, setKeyword] = useState('');
   const [plantCategory, setPlantCategory] = useState<'all' | PlantCategory>('all');
   const [drawerState, setDrawerState] = useState<DrawerState>({ open: false, type: null, record: null });
-  const useFixedKnowledgeColumns = Boolean(screens.lg);
 
   const normalizedKeyword = keyword.trim().toLowerCase();
 
@@ -136,7 +133,6 @@ const Knowledge: React.FC = () => {
       dataIndex: 'name',
       key: 'name',
       width: 110,
-      fixed: useFixedKnowledgeColumns ? 'left' : undefined,
       sorter: (a, b) => a.name.localeCompare(b.name, 'zh-CN'),
     },
     {
@@ -217,7 +213,7 @@ const Knowledge: React.FC = () => {
       title: '详情',
       key: 'action',
       width: 80,
-      fixed: useFixedKnowledgeColumns ? 'right' : undefined,
+      align: 'center',
       render: (_, record) => (
         <Button type="link" size="small" onClick={() => setDrawerState({ open: true, type: 'plant', record })}>
           详情
@@ -232,7 +228,6 @@ const Knowledge: React.FC = () => {
       dataIndex: 'soilType',
       key: 'soilType',
       width: 120,
-      fixed: useFixedKnowledgeColumns ? 'left' : undefined,
       sorter: (a, b) => a.soilType.localeCompare(b.soilType, 'zh-CN'),
     },
     {
@@ -282,7 +277,7 @@ const Knowledge: React.FC = () => {
       title: '详情',
       key: 'action',
       width: 80,
-      fixed: useFixedKnowledgeColumns ? 'right' : undefined,
+      align: 'center',
       render: (_, record) => (
         <Button type="link" size="small" onClick={() => setDrawerState({ open: true, type: 'soil', record })}>
           详情
@@ -425,6 +420,7 @@ const Knowledge: React.FC = () => {
                     className="knowledge-table"
                     rowKey="id"
                     size="small"
+                    tableLayout="fixed"
                     pagination={{ pageSize: 8, showSizeChanger: false }}
                     columns={plantColumns}
                     dataSource={filteredPlants}
@@ -445,6 +441,7 @@ const Knowledge: React.FC = () => {
                     className="knowledge-table"
                     rowKey="id"
                     size="small"
+                    tableLayout="fixed"
                     pagination={{ pageSize: 8, showSizeChanger: false }}
                     columns={soilColumns}
                     dataSource={filteredSoils}
@@ -467,6 +464,7 @@ const Knowledge: React.FC = () => {
                       className="knowledge-table"
                       rowKey="id"
                       size="small"
+                      tableLayout="fixed"
                       pagination={false}
                       columns={decisionModeColumns}
                       dataSource={filteredDecisionModes}
@@ -483,6 +481,7 @@ const Knowledge: React.FC = () => {
                       className="knowledge-table"
                       rowKey="id"
                       size="small"
+                      tableLayout="fixed"
                       pagination={false}
                       columns={alarmColumns}
                       dataSource={filteredAlarmThresholds}

@@ -10,27 +10,13 @@
   scrollbar-gutter: stable;
 }
 
-.knowledge-page .knowledge-table .ant-table-thead > tr > .ant-table-cell-fix-left,
-.knowledge-page .knowledge-table .ant-table-thead > tr > .ant-table-cell-fix-right {
-  z-index: 3;
-  background: #f2f5f9 !important;
+.knowledge-page .knowledge-table .ant-table-cell {
+  white-space: nowrap;
 }
 
-.knowledge-page .knowledge-table .ant-table-tbody > tr > .ant-table-cell-fix-left,
-.knowledge-page .knowledge-table .ant-table-tbody > tr > .ant-table-cell-fix-right {
-  z-index: 2;
-  background: rgba(255, 255, 255, 0.92) !important;
-  background-clip: padding-box;
-}
-
-.knowledge-page .knowledge-table .ant-table-tbody > tr:nth-child(even) > .ant-table-cell-fix-left,
-.knowledge-page .knowledge-table .ant-table-tbody > tr:nth-child(even) > .ant-table-cell-fix-right {
-  background: rgba(255, 255, 255, 0.96) !important;
-}
-
-.knowledge-page .knowledge-table .ant-table-tbody > tr:hover > .ant-table-cell-fix-left,
-.knowledge-page .knowledge-table .ant-table-tbody > tr:hover > .ant-table-cell-fix-right {
-  background: rgba(19, 102, 255, 0.05) !important;
+.knowledge-page .knowledge-table .ant-table-cell-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @media (max-width: 767px) {
