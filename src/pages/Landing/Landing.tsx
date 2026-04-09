@@ -9,10 +9,22 @@ import {
   HistoryOutlined,
   RadarChartOutlined,
 } from '@ant-design/icons';
-import { Button, Card, Col, Form, Input, Row, Select, Space, Typography, message } from 'antd';
+import { Button, Card, Col, Form, Input, Row, Select, Typography, message } from 'antd';
 import './Landing.css';
 
 const { Title, Paragraph, Text } = Typography;
+
+const heroSignals = [
+  { label: '实时接入', value: '12 类设备' },
+  { label: '决策模式', value: '5 种策略' },
+  { label: '场景覆盖', value: '果园 / 林场 / 农场' },
+];
+
+const heroStats = [
+  { value: '72', label: '综合决策分值' },
+  { value: '18%', label: '预估节水空间' },
+  { value: '24h', label: '站点状态连续监控' },
+];
 
 const modeCards = [
   { icon: <DeploymentUnitOutlined />, name: '模式1 定时灌溉', desc: '按固定时段执行，适合规则化地块。' },
@@ -107,41 +119,95 @@ const Landing: React.FC = () => {
     <div className="landing-page page-container">
       <section className="landing-hero" id="hero">
         <div className="landing-hero-copy">
-          <Title className="landing-hero-title">智灌云 · 让植物告诉你何时灌水</Title>
+          <Text className="landing-eyebrow">Smart Irrigation Decision Platform</Text>
+          <Title className="landing-hero-title">
+            智灌云
+            <span>让植物状态直接参与灌溉决策</span>
+          </Title>
           <Paragraph className="landing-hero-subtitle">
-            基于植物水分生理指标的新一代智能灌溉决策平台
+            基于液流、茎径、膨压和土壤水势等多源信号，统一完成站点监控、阀控执行、告警闭环和精准灌溉策略下发。
           </Paragraph>
-          <Space size={12} wrap>
+          <div className="landing-hero-points">
+            {heroSignals.map((item) => (
+              <div key={item.label} className="landing-hero-point">
+                <Text className="landing-hero-point-label">{item.label}</Text>
+                <Text className="landing-hero-point-value">{item.value}</Text>
+              </div>
+            ))}
+          </div>
+          <div className="landing-hero-actions">
             <Button type="primary" size="large" onClick={() => scrollTo('contact')}>申请演示</Button>
             <Button size="large" onClick={() => scrollTo('features')}>查看功能</Button>
-          </Space>
+          </div>
+          <div className="landing-hero-stats">
+            {heroStats.map((item) => (
+              <div key={item.label} className="landing-hero-stat">
+                <div className="landing-hero-stat-value">{item.value}</div>
+                <div className="landing-hero-stat-label">{item.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="landing-hero-visual" aria-hidden="true">
           <svg viewBox="0 0 560 360">
             <rect x="12" y="12" width="536" height="336" rx="24" fill="var(--bg-card)" stroke="var(--border-base)" />
-            <rect x="36" y="36" width="488" height="70" rx="14" fill="rgba(19, 102, 255, 0.09)" stroke="var(--border-base)" />
-            <rect x="54" y="54" width="140" height="12" rx="6" fill="rgba(17, 24, 39, 0.2)" />
-            <rect x="54" y="74" width="210" height="10" rx="5" fill="rgba(17, 24, 39, 0.12)" />
-            <circle cx="486" cy="71" r="8" fill="#0f9d80" />
+            <rect x="36" y="36" width="488" height="84" rx="18" fill="rgba(19, 102, 255, 0.09)" stroke="var(--border-base)" />
+            <text x="56" y="61" fill="var(--text-muted)" fontSize="11" fontWeight="600">今日灌溉决策总览</text>
+            <text x="56" y="84" fill="var(--text-primary)" fontSize="22" fontWeight="700">北林试验站 A-03</text>
+            <text x="56" y="102" fill="var(--text-secondary)" fontSize="11">植物生理信号正常，推荐 18:30 启动第 2 区轮灌</text>
+
+            <rect x="332" y="54" width="58" height="48" rx="12" fill="var(--bg-card-solid)" stroke="var(--border-base)" />
+            <rect x="400" y="54" width="58" height="48" rx="12" fill="var(--bg-card-solid)" stroke="var(--border-base)" />
+            <rect x="468" y="54" width="36" height="48" rx="12" fill="var(--bg-card-solid)" stroke="var(--border-base)" />
+            <text x="346" y="72" fill="var(--text-muted)" fontSize="10">在线</text>
+            <text x="346" y="92" fill="var(--text-primary)" fontSize="16" fontWeight="700">24</text>
+            <text x="414" y="72" fill="var(--text-muted)" fontSize="10">阀组</text>
+            <text x="414" y="92" fill="var(--text-primary)" fontSize="16" fontWeight="700">08</text>
+            <circle cx="486" cy="78" r="8" fill="#0f9d80" />
+            <text x="478" y="97" fill="var(--text-muted)" fontSize="9">正常</text>
 
             <rect x="36" y="122" width="230" height="196" rx="14" fill="var(--bg-card-solid)" stroke="var(--border-base)" />
             <rect x="284" y="122" width="240" height="196" rx="14" fill="var(--bg-card-solid)" stroke="var(--border-base)" />
+            <text x="56" y="148" fill="var(--text-muted)" fontSize="11" fontWeight="600">多源信号趋势</text>
+            <text x="304" y="148" fill="var(--text-muted)" fontSize="11" fontWeight="600">决策评分与执行建议</text>
+
+            <line x1="56" y1="286" x2="236" y2="286" stroke="rgba(15, 23, 42, 0.1)" />
+            <line x1="56" y1="246" x2="236" y2="246" stroke="rgba(15, 23, 42, 0.08)" />
+            <line x1="56" y1="206" x2="236" y2="206" stroke="rgba(15, 23, 42, 0.08)" />
 
             <path d="M56 286 L90 250 L126 260 L160 222 L196 230 L232 184" fill="none" stroke="#1366ff" strokeWidth="3" strokeLinecap="round" />
             <path d="M56 298 L92 280 L128 288 L162 268 L198 276 L232 242" fill="none" stroke="#0f9d80" strokeWidth="2.4" strokeLinecap="round" />
+            <circle cx="232" cy="184" r="4.5" fill="#1366ff" />
+            <circle cx="232" cy="242" r="4.5" fill="#0f9d80" />
+            <text x="56" y="304" fill="var(--text-muted)" fontSize="10">08:00</text>
+            <text x="132" y="304" fill="var(--text-muted)" fontSize="10">12:00</text>
+            <text x="208" y="304" fill="var(--text-muted)" fontSize="10">16:00</text>
+            <text x="56" y="170" fill="#1366ff" fontSize="10">液流速率</text>
+            <text x="116" y="170" fill="#0f9d80" fontSize="10">茎径变化</text>
 
             <circle cx="392" cy="214" r="64" fill="rgba(19, 102, 255, 0.08)" stroke="rgba(19, 102, 255, 0.2)" />
             <path d="M392 166 A48 48 0 1 1 352 245" fill="none" stroke="#1366ff" strokeWidth="12" strokeLinecap="round" />
-            <path d="M392 166 A48 48 0 0 1 434 189" fill="none" stroke="#ff6b35" strokeWidth="12" strokeLinecap="round" />
+            <path d="M392 166 A48 48 0 0 1 434 189" fill="none" stroke="#db7f2f" strokeWidth="12" strokeLinecap="round" />
             <text x="392" y="224" textAnchor="middle" fill="var(--text-primary)" fontSize="26" fontWeight="700">72</text>
             <text x="392" y="246" textAnchor="middle" fill="var(--text-muted)" fontSize="11">Decision Score</text>
+
+            <rect x="452" y="176" width="52" height="18" rx="9" fill="rgba(15, 157, 128, 0.12)" />
+            <text x="463" y="188" fill="#0f9d80" fontSize="10" fontWeight="700">推荐执行</text>
+            <text x="304" y="286" fill="var(--text-secondary)" fontSize="11">建议模式</text>
+            <text x="304" y="304" fill="var(--text-primary)" fontSize="14" fontWeight="700">模式 5 植物亏缺指标</text>
+            <text x="430" y="286" fill="var(--text-secondary)" fontSize="11">灌溉窗口</text>
+            <text x="430" y="304" fill="var(--text-primary)" fontSize="14" fontWeight="700">18:30 - 19:10</text>
           </svg>
         </div>
       </section>
 
       <section className="landing-section" id="pain">
-        <Title level={2}>传统灌溉的问题</Title>
+        <div className="landing-section-head">
+          <Text className="landing-eyebrow">Why old irrigation underperforms</Text>
+          <Title level={2}>传统灌溉的问题</Title>
+          <Paragraph>判断滞后、经验依赖和系统割裂，通常不是单点故障，而是整套决策链条缺少可量化依据。</Paragraph>
+        </div>
         <Row gutter={[16, 16]}>
           <Col xs={24} md={8}>
             <Card className="landing-card" bordered>
@@ -165,7 +231,11 @@ const Landing: React.FC = () => {
       </section>
 
       <section className="landing-section" id="solution">
-        <Title level={2}>智灌云的做法</Title>
+        <div className="landing-section-head">
+          <Text className="landing-eyebrow">How the platform decides</Text>
+          <Title level={2}>智灌云的做法</Title>
+          <Paragraph>把“植物是否缺水”放在算法中心，并将决策逻辑、设备执行和回执追踪统一到一个闭环里。</Paragraph>
+        </div>
         <Row gutter={[16, 16]}>
           <Col xs={24} lg={12}>
             <Card className="landing-compare-card" bordered>
@@ -193,7 +263,11 @@ const Landing: React.FC = () => {
       </section>
 
       <section className="landing-section" id="features">
-        <Title level={2}>平台功能</Title>
+        <div className="landing-section-head">
+          <Text className="landing-eyebrow">Platform capabilities</Text>
+          <Title level={2}>平台功能</Title>
+          <Paragraph>既能服务科研试验站，也能支撑大规模商业部署，重点是把监测、决策、执行和追溯放在同一工作流中。</Paragraph>
+        </div>
         <Row gutter={[16, 16]}>
           {featureCards.map((item) => (
             <Col xs={24} md={12} lg={8} key={item.title}>
@@ -211,7 +285,11 @@ const Landing: React.FC = () => {
       </section>
 
       <section className="landing-section" id="scenarios">
-        <Title level={2}>适用于</Title>
+        <div className="landing-section-head">
+          <Text className="landing-eyebrow">Deployment scenarios</Text>
+          <Title level={2}>适用于</Title>
+          <Paragraph>不同作物、不同地块与不同管理强度下，平台都可以用统一的数据结构和决策逻辑组织灌溉策略。</Paragraph>
+        </div>
         <Row gutter={[16, 16]}>
           {scenarioCards.map((item) => (
             <Col xs={24} md={8} key={item.title}>
@@ -227,7 +305,11 @@ const Landing: React.FC = () => {
       </section>
 
       <section className="landing-section" id="contact">
-        <Title level={2}>申请产品演示</Title>
+        <div className="landing-section-head">
+          <Text className="landing-eyebrow">Book a tailored walkthrough</Text>
+          <Title level={2}>申请产品演示</Title>
+          <Paragraph>留下作物类型和组织信息，我们会按您的试验或生产场景准备演示内容，而不是只给通用页面展示。</Paragraph>
+        </div>
         <Card className="landing-contact-card" bordered>
           <Form form={form} layout="vertical" onFinish={onSubmit}>
             <Row gutter={16}>
