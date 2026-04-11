@@ -28,14 +28,14 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import type { Sensor, Site } from '../../types/site';
+import { useMqttStatusListener } from '../../hooks/useMqttStatus';
+import { useMqttSubscription } from '../../hooks/useMqttSubscription';
 import {
-  addMqttStatusListener,
   connectMqtt,
   disconnectMqtt,
   getMqttBrokerUrl,
   getMqttStatus,
   publishMqtt,
-  subscribeMqtt,
   type MqttMessage,
   type MqttStatus,
 } from '../../utils/mqttClient';
@@ -373,6 +373,150 @@ const Monitor: React.FC = () => {
     setCommandHistory((previous) => [nextEntry, ...previous].slice(0, MAX_HISTORY));
   };
 
+  const appendLog = (packet: MqttMessage) => {
+    setMessageCount((count) => count + 1);
+    if (logsPausedRef.current) {
+      return;
+    }
+
+    const entry: LogEntry = {
+      id: createId('log'),
+      timestamp: packet.timestamp,
+      topic: packet.topic,
+      payload: packet.payloadText,
+    };
+    setLogs((previous) => [entry, ...previous].slice(0, MAX_LOGS));
+  };
+
+  const handleSensorMessage = (packet: MqttMessage) => {
+    appendLog(packet);
+
+    const body = parsePacketBody(packet);
+    const deviceId = String(body.deviceId ?? packet.topic.split('/')[4] ?? '');
+    const sensor = sensors.find((item) => resolveDeviceId(item) === deviceId);
+    if (!sensor) {
+      return;
+    }
+
+    const rawValue = body.value;
+    const numericValue = typeof rawValue === 'number'
+      ? rawValue
+      : typeof rawValue === 'string' && rawValue.trim()
+        ? Number(rawValue)
+        : null;
+    const resolvedValue = sensor.type === 'valve'
+      ? String(body.state ?? body.value ?? '关闭')
+      : sensor.type === 'pump'
+        ? Number(body.frequencyHz ?? body.value ?? 38)
+        : numericValue;
+    const unit = typeof body.unit === 'string' ? body.unit : sensorUnitMap[sensor.type] ?? '';
+    const timestamp = typeof body.ts === 'number' ? body.ts : packet.timestamp;
+
+    setSensorStateMap((previous) => {
+      const base = previous[sensor.id] ?? buildInitialSensorState(sensor);
+      const nextHistoryValue = typeof resolvedValue === 'number'
+        ? resolvedValue
+        : base.history[base.history.length - 1] ?? sensorBaseMap[sensor.type];
+      return {
+        ...previous,
+        [sensor.id]: {
+          latestValue: resolvedValue,
+          unit,
+          lastUpdatedAt: timestamp,
+          history: [...base.history.slice(-(MAX_POINTS - 1)), nextHistoryValue],
+          flashing: true,
+        },
+      };
+    });
+
+    if (sensor.type === 'valve' || sensor.type === 'pump') {
+      const runningFlag = typeof body.running === 'boolean'
+        ? body.running
+        : sensor.type === 'pump'
+          ? Number(body.frequencyHz ?? body.value ?? 0) > 0
+          : undefined;
+
+      setDeviceCommandState((previous) => ({
+        ...previous,
+        [sensor.id]: {
+          ...(previous[sensor.id] ?? buildInitialDeviceState(sensor)),
+          valueLabel: sensor.type === 'valve'
+            ? String(body.state ?? resolvedValue)
+            : `${Number(body.frequencyHz ?? resolvedValue ?? 38).toFixed(1)} Hz`,
+          runtimeSince: sensor.type === 'pump'
+            ? runningFlag
+              ? previous[sensor.id]?.runtimeSince ?? timestamp
+              : null
+            : previous[sensor.id]?.runtimeSince ?? null,
+          frequencyHz: sensor.type === 'pump'
+            ? Number(body.frequencyHz ?? resolvedValue ?? previous[sensor.id]?.frequencyHz ?? 38)
+            : undefined,
+        },
+      }));
+    }
+
+    window.setTimeout(() => {
+      setSensorStateMap((previous) => ({
+        ...previous,
+        [sensor.id]: {
+          ...(previous[sensor.id] ?? buildInitialSensorState(sensor)),
+          flashing: false,
+        },
+      }));
+    }, 1000);
+  };
+
+  const handleAckMessage = (packet: MqttMessage) => {
+    appendLog(packet);
+
+    const body = parsePacketBody(packet);
+    const msgId = String(body.msgId ?? '');
+    const waiter = ackWaitersRef.current.get(msgId);
+    if (!waiter) {
+      return;
+    }
+
+    ackWaitersRef.current.delete(msgId);
+    window.clearTimeout(waiter.timeoutId);
+
+    const timestamp = packet.timestamp;
+    const latencyMs = timestamp - waiter.startedAt;
+    const status: CommandStatus = String(body.status ?? 'ack') === 'ack' ? 'ack' : 'failed';
+    const sensor = controlSensors.find((item) => resolveDeviceId(item) === waiter.deviceId);
+
+    appendCommandHistory({
+      msgId,
+      timestamp,
+      deviceId: waiter.deviceId,
+      command: waiter.command,
+      status,
+      latencyMs,
+    });
+
+    if (sensor) {
+      setDeviceCommandState((previous) => ({
+        ...previous,
+        [sensor.id]: {
+          ...(previous[sensor.id] ?? buildInitialDeviceState(sensor)),
+          status,
+          lastAction: status === 'ack' ? `${waiter.command} 已确认` : `${waiter.command} 失败`,
+          lastCommandAt: timestamp,
+          runtimeSince: waiter.command.includes('启动') || waiter.command.includes('开启')
+            ? previous[sensor.id]?.runtimeSince ?? timestamp
+            : waiter.command.includes('停止') || waiter.command.includes('关闭')
+              ? null
+              : previous[sensor.id]?.runtimeSince ?? null,
+        },
+      }));
+    }
+
+    if (status === 'ack') {
+      message.success(`${waiter.deviceId} 指令已确认`);
+    } else {
+      message.error(`${waiter.deviceId} 指令失败`);
+    }
+  };
+
   useEffect(() => {
     const tick = window.setInterval(() => setNowTick(getTimestamp()), 1000);
     return () => window.clearInterval(tick);
@@ -382,160 +526,24 @@ const Monitor: React.FC = () => {
     logsPausedRef.current = logsPaused;
   }, [logsPaused]);
 
+  useMqttStatusListener((nextState) => {
+    updateMqttStatus(nextState, brokerRef.current);
+  });
+
+  useMqttSubscription(
+    currentSiteId ? `siz/v1/${currentSiteId}/sensor/+/data` : null,
+    handleSensorMessage,
+    Boolean(currentSiteId),
+  );
+
+  useMqttSubscription(
+    currentSiteId ? `siz/v1/${currentSiteId}/control/+/ack` : null,
+    handleAckMessage,
+    Boolean(currentSiteId),
+  );
+
   useEffect(() => {
     let disposed = false;
-    let unsubscribeSensor: (() => void) | undefined;
-    let unsubscribeAck: (() => void) | undefined;
-
-    const appendLog = (packet: MqttMessage) => {
-      setMessageCount((count) => count + 1);
-      if (logsPausedRef.current) {
-        return;
-      }
-
-      const entry: LogEntry = {
-        id: createId('log'),
-        timestamp: packet.timestamp,
-        topic: packet.topic,
-        payload: packet.payloadText,
-      };
-      setLogs((previous) => [entry, ...previous].slice(0, MAX_LOGS));
-    };
-
-    const handleSensorMessage = (packet: MqttMessage) => {
-      appendLog(packet);
-
-      const body = parsePacketBody(packet);
-      const deviceId = String(body.deviceId ?? packet.topic.split('/')[4] ?? '');
-      const sensor = sensors.find((item) => resolveDeviceId(item) === deviceId);
-      if (!sensor) {
-        return;
-      }
-
-      const rawValue = body.value;
-      const numericValue = typeof rawValue === 'number'
-        ? rawValue
-        : typeof rawValue === 'string' && rawValue.trim()
-          ? Number(rawValue)
-          : null;
-      const resolvedValue = sensor.type === 'valve'
-        ? String(body.state ?? body.value ?? '关闭')
-        : sensor.type === 'pump'
-          ? Number(body.frequencyHz ?? body.value ?? 38)
-          : numericValue;
-      const unit = typeof body.unit === 'string' ? body.unit : sensorUnitMap[sensor.type] ?? '';
-      const timestamp = typeof body.ts === 'number' ? body.ts : packet.timestamp;
-
-      setSensorStateMap((previous) => {
-        const base = previous[sensor.id] ?? buildInitialSensorState(sensor);
-        const nextHistoryValue = typeof resolvedValue === 'number'
-          ? resolvedValue
-          : base.history[base.history.length - 1] ?? sensorBaseMap[sensor.type];
-        return {
-          ...previous,
-          [sensor.id]: {
-            latestValue: resolvedValue,
-            unit,
-            lastUpdatedAt: timestamp,
-            history: [...base.history.slice(-(MAX_POINTS - 1)), nextHistoryValue],
-            flashing: true,
-          },
-        };
-      });
-
-      if (sensor.type === 'valve' || sensor.type === 'pump') {
-        const runningFlag = typeof body.running === 'boolean'
-          ? body.running
-          : sensor.type === 'pump'
-            ? Number(body.frequencyHz ?? body.value ?? 0) > 0
-            : undefined;
-
-        setDeviceCommandState((previous) => ({
-          ...previous,
-          [sensor.id]: {
-            ...(previous[sensor.id] ?? buildInitialDeviceState(sensor)),
-            valueLabel: sensor.type === 'valve'
-              ? String(body.state ?? resolvedValue)
-              : `${Number(body.frequencyHz ?? resolvedValue ?? 38).toFixed(1)} Hz`,
-            runtimeSince: sensor.type === 'pump'
-              ? runningFlag
-                ? previous[sensor.id]?.runtimeSince ?? timestamp
-                : null
-              : previous[sensor.id]?.runtimeSince ?? null,
-            frequencyHz: sensor.type === 'pump'
-              ? Number(body.frequencyHz ?? resolvedValue ?? previous[sensor.id]?.frequencyHz ?? 38)
-              : undefined,
-          },
-        }));
-      }
-
-      window.setTimeout(() => {
-        setSensorStateMap((previous) => ({
-          ...previous,
-          [sensor.id]: {
-            ...(previous[sensor.id] ?? buildInitialSensorState(sensor)),
-            flashing: false,
-          },
-        }));
-      }, 1000);
-    };
-
-    const handleAckMessage = (packet: MqttMessage) => {
-      appendLog(packet);
-
-      const body = parsePacketBody(packet);
-      const msgId = String(body.msgId ?? '');
-      const waiter = ackWaitersRef.current.get(msgId);
-      if (!waiter) {
-        return;
-      }
-
-      ackWaitersRef.current.delete(msgId);
-      window.clearTimeout(waiter.timeoutId);
-
-      const timestamp = packet.timestamp;
-      const latencyMs = timestamp - waiter.startedAt;
-      const status: CommandStatus = String(body.status ?? 'ack') === 'ack' ? 'ack' : 'failed';
-      const sensor = controlSensors.find((item) => resolveDeviceId(item) === waiter.deviceId);
-
-      appendCommandHistory({
-        msgId,
-        timestamp,
-        deviceId: waiter.deviceId,
-        command: waiter.command,
-        status,
-        latencyMs,
-      });
-
-      if (sensor) {
-        setDeviceCommandState((previous) => ({
-          ...previous,
-          [sensor.id]: {
-            ...(previous[sensor.id] ?? buildInitialDeviceState(sensor)),
-            status,
-            lastAction: status === 'ack' ? `${waiter.command} 已确认` : `${waiter.command} 失败`,
-            lastCommandAt: timestamp,
-            runtimeSince: waiter.command.includes('启动') || waiter.command.includes('开启')
-              ? previous[sensor.id]?.runtimeSince ?? timestamp
-              : waiter.command.includes('停止') || waiter.command.includes('关闭')
-                ? null
-                : previous[sensor.id]?.runtimeSince ?? null,
-          },
-        }));
-      }
-
-      if (status === 'ack') {
-        message.success(`${waiter.deviceId} 指令已确认`);
-      } else {
-        message.error(`${waiter.deviceId} 指令失败`);
-      }
-    };
-
-    const unsubscribeStatus = addMqttStatusListener((nextState) => {
-      if (!disposed) {
-        updateMqttStatus(nextState, brokerRef.current);
-      }
-    });
 
     const bootstrap = async () => {
       try {
@@ -551,9 +559,6 @@ const Monitor: React.FC = () => {
       if (disposed) {
         return;
       }
-
-      unsubscribeSensor = subscribeMqtt(`siz/v1/${currentSiteId}/sensor/+/data`, handleSensorMessage);
-      unsubscribeAck = subscribeMqtt(`siz/v1/${currentSiteId}/control/+/ack`, handleAckMessage);
 
       const now = getTimestamp();
       sensors.forEach((sensor) => {
@@ -592,11 +597,8 @@ const Monitor: React.FC = () => {
 
     return () => {
       disposed = true;
-      unsubscribeSensor?.();
-      unsubscribeAck?.();
-      unsubscribeStatus?.();
     };
-  }, [controlSensors, currentSiteId, sensors]);
+  }, [currentSiteId, sensors]);
 
   useEffect(() => () => {
     ackWaitersRef.current.forEach((waiter) => window.clearTimeout(waiter.timeoutId));

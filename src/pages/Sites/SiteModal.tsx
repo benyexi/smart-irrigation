@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Badge,
@@ -356,6 +356,8 @@ const SiteModal: React.FC<SiteModalProps> = ({ open, initialSite, onCancel, onSa
   const [dragTarget, setDragTarget] = useState<DragTarget>(null);
   const [addSensorAt, setAddSensorAt] = useState<{ x: number; y: number } | null>(null);
   const [quickAddType, setQuickAddType] = useState<QuickAddSensorType>();
+  const dragFrameRef = useRef<number | null>(null);
+  const pendingCanvasCoordsRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     if (open === false) {
@@ -490,8 +492,12 @@ const SiteModal: React.FC<SiteModalProps> = ({ open, initialSite, onCancel, onSa
     setPipelines((prev) => prev.filter((pipeline) => pipeline.id !== id));
   };
 
-  const onSvgMouseMove = (evt: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
-    const coords = getCoordsFromEvent(evt);
+  const flushCanvasDrag = () => {
+    dragFrameRef.current = null;
+    const coords = pendingCanvasCoordsRef.current;
+    if (!coords) {
+      return;
+    }
 
     if (drawMode === 'pipe' && pipeStart) {
       setPipeHover(coords);
@@ -525,7 +531,33 @@ const SiteModal: React.FC<SiteModalProps> = ({ open, initialSite, onCancel, onSa
     }));
   };
 
+  const scheduleCanvasDrag = (coords: { x: number; y: number }) => {
+    pendingCanvasCoordsRef.current = coords;
+    if (dragFrameRef.current !== null) {
+      return;
+    }
+    dragFrameRef.current = window.requestAnimationFrame(flushCanvasDrag);
+  };
+
+  const flushPendingCanvasDrag = () => {
+    if (dragFrameRef.current !== null) {
+      window.cancelAnimationFrame(dragFrameRef.current);
+      dragFrameRef.current = null;
+    }
+    flushCanvasDrag();
+  };
+
+  const onSvgMouseMove = (evt: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
+    const coords = getCoordsFromEvent(evt);
+
+    if (!dragTarget && !(drawMode === 'pipe' && pipeStart)) {
+      return;
+    }
+    scheduleCanvasDrag(coords);
+  };
+
   const onSvgMouseUp = () => {
+    flushPendingCanvasDrag();
     setDragTarget(null);
   };
 
@@ -580,6 +612,12 @@ const SiteModal: React.FC<SiteModalProps> = ({ open, initialSite, onCancel, onSa
     setPipeStart(null);
     setPipeHover(null);
   };
+
+  useEffect(() => () => {
+    if (dragFrameRef.current !== null) {
+      window.cancelAnimationFrame(dragFrameRef.current);
+    }
+  }, []);
 
   const onModeSelect = (modeId: 1 | 2 | 3 | 4 | 5) => {
     setDecisionMode(modeId);

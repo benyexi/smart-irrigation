@@ -1,11 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Row, Col, Card, Select, Tag, Typography, Button } from 'antd';
 import { ArrowUpOutlined, ArrowDownOutlined, AlertOutlined, ThunderboltOutlined, DropboxOutlined, DashboardOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import { mockDashboard, mockHistoryData, mockHistoryTimestamps } from '../../mock';
 import { getCurrentSiteId, getSites, setCurrentSiteId } from '../../utils/siteStorage';
-import { addMqttStatusListener, getMqttStatus, subscribeMqtt, type MqttMessage, type MqttStatus } from '../../utils/mqttClient';
+import type { MqttMessage } from '../../utils/mqttClient';
 import type { Site } from '../../types/site';
+import { useMqttStatus } from '../../hooks/useMqttStatus';
+import { useMqttSubscription } from '../../hooks/useMqttSubscription';
 import SiteModal from '../Sites/SiteModal';
 
 const { Text } = Typography;
@@ -105,7 +107,7 @@ const Dashboard: React.FC = () => {
   const [sites, setSites] = useState<Site[]>(() => getSites());
   const [selectedSite, setSelectedSite] = useState<string>(() => getCurrentSiteId());
   const [siteModalOpen, setSiteModalOpen] = useState(false);
-  const [mqttStatus, setMqttStatus] = useState<MqttStatus>(() => getMqttStatus());
+  const mqttStatus = useMqttStatus();
   const [plantPhysiology, setPlantPhysiology] = useState(() => mockDashboard.plantPhysiology);
 
   const dash = mockDashboard;
@@ -147,57 +149,49 @@ const Dashboard: React.FC = () => {
     setSiteModalOpen(true);
   };
 
-  useEffect(() => {
-    return addMqttStatusListener(setMqttStatus);
-  }, []);
+  const handleTelemetry = (message: MqttMessage) => {
+    const payload = message.payload && typeof message.payload === 'object'
+      ? message.payload as Record<string, unknown>
+      : {};
 
-  useEffect(() => {
-    if (!currentSiteId) {
-      return undefined;
+    const deviceId = normalizeId(payload.deviceId)
+      || normalizeId(payload.sensorId)
+      || normalizeId(payload.id)
+      || getTopicDeviceId(message.topic)
+      || '';
+
+    const sensor = monitoredSensors.get(deviceId);
+    if (!sensor) {
+      return;
     }
 
-    const topic = `siz/v1/${currentSiteId}/sensor/+/data`;
-    const handleTelemetry = (message: MqttMessage) => {
-      const payload = message.payload && typeof message.payload === 'object'
-        ? message.payload as Record<string, unknown>
-        : {};
+    const nextValue = getTelemetryValue(message.payload);
+    if (nextValue === null) {
+      return;
+    }
 
-      const deviceId = normalizeId(payload.deviceId)
-        || normalizeId(payload.sensorId)
-        || normalizeId(payload.id)
-        || getTopicDeviceId(message.topic)
-        || '';
-
-      const sensor = monitoredSensors.get(deviceId);
-      if (!sensor) {
-        return;
+    setPlantPhysiology((prev) => {
+      if (sensor.type === 'sapflow') {
+        return { ...prev, sapFlowRate: nextValue };
       }
 
-      const nextValue = getTelemetryValue(message.payload);
-      if (nextValue === null) {
-        return;
+      if (sensor.type === 'stem_diameter') {
+        return { ...prev, stemDiameterVariation: nextValue };
       }
 
-      setPlantPhysiology((prev) => {
-        if (sensor.type === 'sapflow') {
-          return { ...prev, sapFlowRate: nextValue };
-        }
+      if (sensor.type === 'leaf_turgor') {
+        return { ...prev, leafTurgorPressure: nextValue };
+      }
 
-        if (sensor.type === 'stem_diameter') {
-          return { ...prev, stemDiameterVariation: nextValue };
-        }
+      return prev;
+    });
+  };
 
-        if (sensor.type === 'leaf_turgor') {
-          return { ...prev, leafTurgorPressure: nextValue };
-        }
-
-        return prev;
-      });
-    };
-
-    const unsubscribe = subscribeMqtt(topic, handleTelemetry);
-    return () => unsubscribe();
-  }, [currentSiteId, monitoredSensors]);
+  useMqttSubscription(
+    currentSiteId ? `siz/v1/${currentSiteId}/sensor/+/data` : null,
+    handleTelemetry,
+    Boolean(currentSiteId),
+  );
 
   return (
     <div className="page-container">
