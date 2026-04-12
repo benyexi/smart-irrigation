@@ -1,5 +1,5 @@
 import type { Sensor } from '../../types/site';
-import type { MqttMessage } from '../../utils/mqttClient';
+import { parseMqttPayload } from '../../utils/mqttTelemetry';
 import { resolveDeviceId } from './monitorViewShared';
 
 export const getTimestamp = () => Date.now();
@@ -10,23 +10,7 @@ export const createId = (prefix: string) =>
 export const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
-export const parsePacketBody = (
-  packet: MqttMessage,
-): Record<string, unknown> => {
-  if (
-    packet.payload &&
-    typeof packet.payload === 'object' &&
-    !Array.isArray(packet.payload)
-  ) {
-    return packet.payload as Record<string, unknown>;
-  }
-
-  try {
-    return JSON.parse(packet.payloadText) as Record<string, unknown>;
-  } catch {
-    return { value: packet.payloadText };
-  }
-};
+export const parsePacketBody = parseMqttPayload;
 
 export const getSensorTopic = (siteId: string, sensor: Sensor) =>
   `siz/v1/${siteId}/sensor/${resolveDeviceId(sensor)}/data`;

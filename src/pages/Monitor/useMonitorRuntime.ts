@@ -10,6 +10,10 @@ import {
   type MqttMessage,
 } from '../../utils/mqttClient';
 import {
+  buildDeviceSensorMap,
+  getMqttPacketDeviceId,
+} from '../../utils/mqttTelemetry';
+import {
   DEFAULT_BROKER,
   MAX_POINTS,
   sensorBaseMap,
@@ -85,17 +89,11 @@ export const useMonitorRuntime = ({
   const [nowTick, setNowTick] = useState(0);
 
   const sensorByDeviceId = useMemo(
-    () =>
-      new Map(
-        sensors.map((sensor) => [resolveDeviceId(sensor), sensor] as const),
-      ),
+    () => buildDeviceSensorMap(sensors),
     [sensors],
   );
   const controlSensorByDeviceId = useMemo(
-    () =>
-      new Map(
-        controlSensors.map((sensor) => [resolveDeviceId(sensor), sensor] as const),
-      ),
+    () => buildDeviceSensorMap(controlSensors),
     [controlSensors],
   );
 
@@ -107,7 +105,7 @@ export const useMonitorRuntime = ({
     appendLog(packet);
 
     const body = parsePacketBody(packet);
-    const deviceId = String(body.deviceId ?? packet.topic.split('/')[4] ?? '');
+    const deviceId = getMqttPacketDeviceId(packet);
     const sensor = sensorByDeviceId.get(deviceId);
     if (!sensor) {
       return;
