@@ -1,20 +1,10 @@
-import React, { useState, useCallback } from 'react';
-import { Row, Col, Card, Slider, Button, Tag, Progress, Table, Typography, Divider, Select } from 'antd';
+import React, { Suspense, lazy, useState, useCallback } from 'react';
+import { Row, Col, Card, Slider, Button, Progress, Typography, Divider, Select, Skeleton } from 'antd';
 import { PlayCircleOutlined, ThunderboltOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
-import type { ColumnsType } from 'antd/es/table';
+import type { DecisionLog } from './components/EngineLogTable';
 
 const { Title, Text } = Typography;
-
-interface DecisionLog {
-  key: number;
-  time: string;
-  mode: string;
-  input: string;
-  result: string;
-  volume: number;
-  duration: number;
-  status: 'irrigate' | 'skip';
-}
+const EngineLogTable = lazy(() => import('./components/EngineLogTable'));
 
 // ── Decision engine logic ──────────────────────────────────────────────────
 function runDecision(params: {
@@ -127,15 +117,6 @@ const Engine: React.FC = () => {
     });
   }, [mode, soilMoisture, sapFlowRate, leafTurgor, et0, rainfall, kc, fieldCapacity, wiltingPoint, area]);
 
-  const logColumns: ColumnsType<DecisionLog> = [
-    { title: '时间', dataIndex: 'time', key: 'time', width: 100 },
-    { title: '决策模式', dataIndex: 'mode', key: 'mode', width: 140 },
-    { title: '输入摘要', dataIndex: 'input', key: 'input' },
-    { title: '结论', dataIndex: 'result', key: 'result', width: 100, render: (v, r) => <Tag color={r.status==='irrigate'?'success':'default'}>{v}</Tag> },
-    { title: '灌水量(m³)', dataIndex: 'volume', key: 'volume', width: 110 },
-    { title: '时长(min)', dataIndex: 'duration', key: 'duration', width: 90 },
-  ];
-
   return (
     <div className="page-container">
       <div style={{ marginBottom: 20 }}>
@@ -228,9 +209,9 @@ const Engine: React.FC = () => {
             )}
           </Card>
 
-          <Card title={`决策日志（${logs.length} 条）`}>
-            <Table columns={logColumns} dataSource={logs} size="small" pagination={{ pageSize: 8 }} locale={{ emptyText: '暂无决策记录' }} />
-          </Card>
+          <Suspense fallback={<Card title={`决策日志（${logs.length} 条）`}><Skeleton active paragraph={{ rows: 6 }} title={false} /></Card>}>
+            <EngineLogTable logs={logs} />
+          </Suspense>
         </Col>
       </Row>
     </div>
