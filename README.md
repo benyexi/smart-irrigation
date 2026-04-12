@@ -110,6 +110,7 @@
 - `SiteModal` 已拆为“父级状态编排器 + Step 子组件”结构：基础信息、田块编辑器、决策模式、报警规则分别独立，后续新增字段与交互不再集中堆在一个文件里。
 - 田块编辑器已独立为 `SiteFieldEditorStep`，父组件只保留拖拽、保存和跨步骤状态管理。
 - MQTT 订阅与状态监听已封装为 React Hook，`Dashboard` 与 `Monitor` 不再手动维护订阅清理逻辑。
+- `Dashboard` 已收口为“页面装配层 + `useDashboardRuntime` 运行时 Hook + `dashboardShared` 图表/遥测共享配置”结构，站点切换与植物生理实时覆盖不再散落在页面体内。
 - `Monitor` 已引入 Zustand 做状态收口，避免日志、设备状态、实时卡片和模拟器配置全部堆在页面局部 `useState` 中。
 - `Monitor` 已拆为“页面运行时编排器 + 视图子组件”结构：状态栏、实时卡片、数据模拟器、控制面板、指令历史、日志侧栏分别独立，页面层只保留 MQTT 生命周期、命令链路和定时器控制。
 - `Monitor` 进一步收口为“站点装配层 + `useMonitorRuntime` 运行时 Hook + 视图子组件”结构；命令状态机、ack 等待器、模拟器定时器和 MQTT 初始化逻辑已从页面本体下沉。
@@ -169,6 +170,8 @@ npm run deploy
 - `src/pages/Monitor/monitorViewShared.ts`：监控页视图层格式化与共享常量
 - `src/pages/Monitor/useMonitorRuntime.ts`：监控页运行时 Hook（MQTT/ack/模拟器/指令链路）
 - `src/pages/Monitor/monitorRuntimeShared.ts`：监控页运行时共享方法与 Topic 生成
+- `src/pages/Dashboard/useDashboardRuntime.ts`：主控看板运行时 Hook（站点切换、实时覆盖）
+- `src/pages/Dashboard/dashboardShared.tsx`：主控看板图表配置、统计卡、遥测解析共享
 - `src/utils/mqttClient.ts`：MQTT 客户端封装
 - `src/utils/siteStorage.ts`：站点存储（localStorage）
 - `src/types/site.ts`：站点/设备核心类型
