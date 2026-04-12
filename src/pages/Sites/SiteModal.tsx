@@ -1,13 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Input, InputNumber, Modal, Select, Space, Steps, message } from 'antd';
+import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
+import { Button, Input, InputNumber, Modal, Select, Skeleton, Space, Steps, message } from 'antd';
 import type { LiteTableColumn } from '../../components/Tables/LiteTable';
 import { plantRecommendations } from '../../mock/knowledge';
 import { useSiteStore } from '../../stores/siteStore';
 import type { AlarmRule, ModeParams, Pipeline, Sensor, Site } from '../../types/site';
-import SiteAlarmRulesStep from './components/SiteAlarmRulesStep';
-import SiteBasicInfoStep, { type SiteBasicInfoStepValue } from './components/SiteBasicInfoStep';
-import SiteDecisionModeStep from './components/SiteDecisionModeStep';
-import SiteFieldEditorStep from './components/SiteFieldEditorStep';
+import type { SiteBasicInfoStepValue } from './components/SiteBasicInfoStep';
 import {
   clamp,
   clampPercent,
@@ -32,6 +29,11 @@ import {
   type PlantLayoutSettings,
 } from './fieldTemplates';
 
+const SiteBasicInfoStep = lazy(() => import('./components/SiteBasicInfoStep'));
+const SiteFieldEditorStep = lazy(() => import('./components/SiteFieldEditorStep'));
+const SiteDecisionModeStep = lazy(() => import('./components/SiteDecisionModeStep'));
+const SiteAlarmRulesStep = lazy(() => import('./components/SiteAlarmRulesStep'));
+
 interface SiteModalProps {
   open: boolean;
   initialSite: Site | null;
@@ -40,6 +42,7 @@ interface SiteModalProps {
 }
 
 type BasicState = SiteBasicInfoStepValue;
+type SiteStep = 0 | 1 | 2 | 3;
 
 const makeId = (prefix: string) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
@@ -84,6 +87,28 @@ const getCoordsFromEvent = (evt: React.MouseEvent<SVGSVGElement, MouseEvent>) =>
   const y = ((evt.clientY - rect.top) / rect.height) * 100;
   return { x: clamp(x, 0, 100), y: clamp(y, 0, 100) };
 };
+
+const preloadSiteStep = (step: SiteStep) => {
+  if (step === 0) {
+    void import('./components/SiteBasicInfoStep');
+    return;
+  }
+  if (step === 1) {
+    void import('./components/SiteFieldEditorStep');
+    return;
+  }
+  if (step === 2) {
+    void import('./components/SiteDecisionModeStep');
+    return;
+  }
+  void import('./components/SiteAlarmRulesStep');
+};
+
+const renderStepFallback = (step: SiteStep) => (
+  <div style={{ padding: step === 1 ? '20px 0' : '8px 0' }}>
+    <Skeleton active paragraph={{ rows: step === 1 ? 12 : 8 }} title={false} />
+  </div>
+);
 
 const SiteModal: React.FC<SiteModalProps> = ({
   open,
@@ -182,6 +207,18 @@ const SiteModal: React.FC<SiteModalProps> = ({
       window.cancelAnimationFrame(dragFrameRef.current);
     }
   }, []);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const current = step as SiteStep;
+    preloadSiteStep(current);
+    if (current < 3) {
+      preloadSiteStep((current + 1) as SiteStep);
+    }
+  }, [open, step]);
 
   const recommendation = useMemo(
     () => plantRecommendations[basic.plantType],
@@ -627,69 +664,77 @@ const SiteModal: React.FC<SiteModalProps> = ({
 
         <div className="site-step-panel">
           {step === 0 && (
-            <SiteBasicInfoStep
-              value={basic}
-              provinces={provinces}
-              plantOptions={plantOptions}
-              soilOptions={soilOptions}
-              climateOptions={climateOptions}
-              recommendation={recommendation}
-              onChange={(patch) => setBasic((prev) => ({ ...prev, ...patch }))}
-              onPlantTypeChange={(value) => {
-                setBasic((prev) => ({ ...prev, plantType: value }));
-                setPlantLayout((prev) => ({
-                  ...getDefaultPlantLayout(value),
-                  showPlants: prev.showPlants,
-                }));
-              }}
-            />
+            <Suspense fallback={renderStepFallback(0)}>
+              <SiteBasicInfoStep
+                value={basic}
+                provinces={provinces}
+                plantOptions={plantOptions}
+                soilOptions={soilOptions}
+                climateOptions={climateOptions}
+                recommendation={recommendation}
+                onChange={(patch) => setBasic((prev) => ({ ...prev, ...patch }))}
+                onPlantTypeChange={(value) => {
+                  setBasic((prev) => ({ ...prev, plantType: value }));
+                  setPlantLayout((prev) => ({
+                    ...getDefaultPlantLayout(value),
+                    showPlants: prev.showPlants,
+                  }));
+                }}
+              />
+            </Suspense>
           )}
 
           {step === 1 && (
-            <SiteFieldEditorStep
-              sensors={sensors}
-              pipelines={pipelines}
-              sensorColumns={sensorColumns}
-              sensorTypeStats={sensorTypeStats}
-              drawMode={drawMode}
-              pipeStart={pipeStart}
-              pipeHover={pipeHover}
-              addSensorAt={addSensorAt}
-              quickAddType={quickAddType}
-              plantLayout={plantLayout}
-              plantLayoutSummary={plantLayoutSummary}
-              plantPositions={plantPositions}
-              isWoody={isWoody}
-              onAddSensor={onAddSensor}
-              onDeleteSensor={onDeleteSensor}
-              onDeletePipeline={onDeletePipeline}
-              onSvgMouseMove={onSvgMouseMove}
-              onSvgMouseUp={onSvgMouseUp}
-              onSvgClick={onSvgClick}
-              onSetDrawMode={onSetDrawMode}
-              onClearPipelines={onClearPipelines}
-              onQuickAddTypeChange={setQuickAddType}
-              onPlantLayoutChange={setPlantLayout}
-              onDragTargetChange={setDragTarget}
-              onAddSensorAtChange={setAddSensorAt}
-            />
+            <Suspense fallback={renderStepFallback(1)}>
+              <SiteFieldEditorStep
+                sensors={sensors}
+                pipelines={pipelines}
+                sensorColumns={sensorColumns}
+                sensorTypeStats={sensorTypeStats}
+                drawMode={drawMode}
+                pipeStart={pipeStart}
+                pipeHover={pipeHover}
+                addSensorAt={addSensorAt}
+                quickAddType={quickAddType}
+                plantLayout={plantLayout}
+                plantLayoutSummary={plantLayoutSummary}
+                plantPositions={plantPositions}
+                isWoody={isWoody}
+                onAddSensor={onAddSensor}
+                onDeleteSensor={onDeleteSensor}
+                onDeletePipeline={onDeletePipeline}
+                onSvgMouseMove={onSvgMouseMove}
+                onSvgMouseUp={onSvgMouseUp}
+                onSvgClick={onSvgClick}
+                onSetDrawMode={onSetDrawMode}
+                onClearPipelines={onClearPipelines}
+                onQuickAddTypeChange={setQuickAddType}
+                onPlantLayoutChange={setPlantLayout}
+                onDragTargetChange={setDragTarget}
+                onAddSensorAtChange={setAddSensorAt}
+              />
+            </Suspense>
           )}
 
           {step === 2 && (
-            <SiteDecisionModeStep
-              decisionMode={decisionMode}
-              modeParams={modeParams}
-              onModeSelect={onModeSelect}
-              onUpdateModeParams={updateModeParams}
-              onWeightChange={onWeightChange}
-            />
+            <Suspense fallback={renderStepFallback(2)}>
+              <SiteDecisionModeStep
+                decisionMode={decisionMode}
+                modeParams={modeParams}
+                onModeSelect={onModeSelect}
+                onUpdateModeParams={updateModeParams}
+                onWeightChange={onWeightChange}
+              />
+            </Suspense>
           )}
 
           {step === 3 && (
-            <SiteAlarmRulesStep
-              alarmRuleMap={alarmRuleMap}
-              onAlarmRuleChange={updateAlarmRule}
-            />
+            <Suspense fallback={renderStepFallback(3)}>
+              <SiteAlarmRulesStep
+                alarmRuleMap={alarmRuleMap}
+                onAlarmRuleChange={updateAlarmRule}
+              />
+            </Suspense>
           )}
         </div>
       </div>

@@ -1,6 +1,5 @@
 import React from 'react';
-import { Alert, Col, Form, InputNumber, Radio, Row, Select, Slider, Tag, TimePicker, Tooltip } from 'antd';
-import dayjs from 'dayjs';
+import { Alert, Col, Form, InputNumber, Radio, Row, Select, Slider, Tag, Tooltip } from 'antd';
 import type { ModeParams, Site } from '../../../types/site';
 
 type DecisionModeId = 1 | 2 | 3 | 4 | 5;
@@ -22,6 +21,16 @@ const decisionModes: Array<{ id: DecisionModeId; name: string; desc: string }> =
 ];
 
 const referenceDepthOptions = ['20cm', '40cm', '60cm', '80cm'];
+
+const timeInputStyle: React.CSSProperties = {
+  width: '100%',
+  minHeight: 32,
+  borderRadius: 10,
+  border: '1px solid var(--border-base)',
+  background: 'rgba(255, 255, 255, 0.86)',
+  color: 'var(--text-primary)',
+  padding: '0 12px',
+};
 
 const SiteDecisionModeStep: React.FC<SiteDecisionModeStepProps> = ({
   decisionMode,
@@ -57,19 +66,21 @@ const SiteDecisionModeStep: React.FC<SiteDecisionModeStepProps> = ({
             <Row gutter={12}>
               <Col span={8}>
                 <Form.Item label="开始时间">
-                  <TimePicker
-                    value={modeParams.startTime ? dayjs(modeParams.startTime, 'HH:mm') : null}
-                    format="HH:mm"
-                    onChange={(value) => onUpdateModeParams({ startTime: value ? value.format('HH:mm') : undefined })}
+                  <input
+                    type="time"
+                    value={modeParams.startTime ?? ''}
+                    style={timeInputStyle}
+                    onChange={(event) => onUpdateModeParams({ startTime: event.target.value || undefined })}
                   />
                 </Form.Item>
               </Col>
               <Col span={8}>
                 <Form.Item label="结束时间">
-                  <TimePicker
-                    value={modeParams.endTime ? dayjs(modeParams.endTime, 'HH:mm') : null}
-                    format="HH:mm"
-                    onChange={(value) => onUpdateModeParams({ endTime: value ? value.format('HH:mm') : undefined })}
+                  <input
+                    type="time"
+                    value={modeParams.endTime ?? ''}
+                    style={timeInputStyle}
+                    onChange={(event) => onUpdateModeParams({ endTime: event.target.value || undefined })}
                   />
                 </Form.Item>
               </Col>

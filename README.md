@@ -125,6 +125,8 @@
 - `Dashboard` 已改为被动 MQTT 订阅：看板只消费现有连接，不再自己主动拉起 Broker 连接，主动连接职责收口到 `Monitor`。
 - `DeferredEChart` 已接入 Dashboard / History / Monitor / Screen，页面框架会先渲染，图表随后异步挂载，降低图表初始化对首屏可见内容的阻塞。
 - `SiteModal` 已改成在 Dashboard / Sites 中按需懒加载，进入页面时不再把站点配置大弹窗作为静态首依赖一起拉取。
+- `SiteModal` 内部四个步骤也已继续拆成独立异步块，并预取当前步骤的下一步；站点配置弹窗主块已明显缩小。
+- `SiteDecisionModeStep` 已移除 `TimePicker/dayjs` 链路，改用原生时间输入，避免单个步骤块异常膨胀。
 - `History` 页已进一步拆成主页面、数据表格组件、报告弹窗组件三段，表格和报告生成逻辑改为独立异步块。
 - `History / Alerts / HistoryReportModal` 已移除 Ant Design `DatePicker`，改用原生日期输入封装的 `LiteDateRange`，构建产物中的 `date-picker` 重块已被消除。
 - `Alerts` 表格、`IoT` Topic 规范表格、`Monitor` 指令历史表格都已继续改为按需异步加载，不再作为对应页面的首屏静态依赖。
