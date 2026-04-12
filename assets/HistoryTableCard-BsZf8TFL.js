@@ -1,0 +1,1 @@
+import{t as e}from"./vendor-react-DyfnwtaQ.js";import{t}from"./card-DdupjkUp.js";import{t as n}from"./LiteTable-Ht5gjj6E.js";var r=e(),i=({columns:e,dataSource:i})=>(0,r.jsx)(t,{children:(0,r.jsx)(n,{columns:e,dataSource:i,rowKey:`key`,pageSize:20,scrollX:800})});export{i as default};
