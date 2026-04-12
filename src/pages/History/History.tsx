@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Row, Col, Card, Select, Button, Table, Typography, DatePicker, Modal, Form, Space, message } from 'antd';
 import { DownloadOutlined, FileTextOutlined } from '@ant-design/icons';
-import ReactECharts from 'echarts-for-react';
+import ReactECharts from '../../components/ECharts/ReactECharts';
 import type { ColumnsType } from 'antd/es/table';
 import { mockHistoryData, mockHistoryTimestamps, metricLabels, mockSites } from '../../mock';
 

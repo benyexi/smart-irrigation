@@ -1,23 +1,22 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ConfigProvider, theme as antTheme } from 'antd';
+import { ConfigProvider, Spin, theme as antTheme } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import { AuthProvider, useAuth } from './hooks/useAuth';
-import AppLayout from './components/Layout/AppLayout';
-
-import Login from './pages/Login/Login';
-import Dashboard from './pages/Dashboard/Dashboard';
-import Monitor from './pages/Monitor/Monitor';
-import History from './pages/History/History';
-import Knowledge from './pages/Knowledge/Knowledge';
-import Alerts from './pages/Alerts/Alerts';
-import Settings from './pages/Settings/Settings';
-import MapPage from './pages/Map/Map';
-import Engine from './pages/Engine/Engine';
-import Screen from './pages/Screen/Screen';
-import Sites from './pages/Sites';
-import IoT from './pages/IoT/IoT';
-import Landing from './pages/Landing/Landing';
+const AppLayout = lazy(() => import('./components/Layout/AppLayout'));
+const Login = lazy(() => import('./pages/Login/Login'));
+const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard'));
+const Monitor = lazy(() => import('./pages/Monitor/Monitor'));
+const History = lazy(() => import('./pages/History/History'));
+const Knowledge = lazy(() => import('./pages/Knowledge/Knowledge'));
+const Alerts = lazy(() => import('./pages/Alerts/Alerts'));
+const Settings = lazy(() => import('./pages/Settings/Settings'));
+const MapPage = lazy(() => import('./pages/Map/Map'));
+const Engine = lazy(() => import('./pages/Engine/Engine'));
+const Screen = lazy(() => import('./pages/Screen/Screen'));
+const Sites = lazy(() => import('./pages/Sites'));
+const IoT = lazy(() => import('./pages/IoT/IoT'));
+const Landing = lazy(() => import('./pages/Landing/Landing'));
 
 const appTheme = {
   algorithm: antTheme.defaultAlgorithm,
@@ -134,6 +133,20 @@ const RequireAuth = ({ children }: { children: React.ReactNode }) => {
   return user ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
+const RouteFallback: React.FC = () => (
+  <div
+    style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'var(--bg-base)',
+    }}
+  >
+    <Spin size="large" />
+  </div>
+);
+
 const AppRoutes: React.FC = () => (
   <Routes>
     <Route path="/login" element={<Login />} />
@@ -171,7 +184,9 @@ const App: React.FC = () => (
   >
     <AuthProvider>
       <HashRouter>
-        <AppRoutes />
+        <Suspense fallback={<RouteFallback />}>
+          <AppRoutes />
+        </Suspense>
       </HashRouter>
     </AuthProvider>
   </ConfigProvider>

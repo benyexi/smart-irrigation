@@ -117,6 +117,8 @@
 - `Dashboard` 与 `Monitor` 已共享 `src/utils/mqttTelemetry.ts`，统一了 MQTT payload 解析、`deviceId` 提取、数值读取与传感器映射，避免两边各维护一套协议适配逻辑。
 - `Dashboard / Monitor / Map / Sites / IoT` 已统一接入 `src/stores/siteStore.ts`，当前站点与站点列表不再各页面分别从 `localStorage` 读一遍；站点切换、保存、删除会自动联动。
 - 站点数据链路已收口为 `SiteModal / 页面 -> siteStore -> siteRepository -> siteStorage(localStorage)`，后续替换真实后端时优先改 repository 实现，不需要逐页回改。
+- `App.tsx` 已改为路由级 `lazy + Suspense` 分包，登录页与重页面不再一次性打进同一个首包。
+- 图表层已从整包 `echarts-for-react` 切到按需注册的 `ReactEChartsCore` 包装组件，当前只注册 `line / bar / gauge / radar / pie` 所需能力，显著压缩了 ECharts vendor 包。
 - 知识库表格已取消固定右列方案，改为稳定的横向滚动与省略显示，避免列叠压。
 
 ---
@@ -171,6 +173,7 @@ npm run deploy
 - `src/stores/monitorStore.types.ts`：监控页运行时类型与默认值
 - `src/stores/siteStore.ts`：站点列表与当前站点的统一运行时 store
 - `src/repositories/siteRepository.ts`：站点数据访问抽象层，当前实现落到 localStorage
+- `src/components/ECharts/ReactECharts.tsx`：ECharts 按需注册包装组件
 - `src/pages/Monitor/components/`：监控页各独立面板组件
 - `src/pages/Monitor/monitorViewShared.ts`：监控页视图层格式化与共享常量
 - `src/pages/Monitor/useMonitorRuntime.ts`：监控页运行时 Hook（MQTT/ack/模拟器/指令链路）
@@ -180,6 +183,7 @@ npm run deploy
 - `src/utils/mqttTelemetry.ts`：Dashboard/Monitor 共用的 MQTT 遥测解析与设备映射工具
 - `src/utils/mqttClient.ts`：MQTT 客户端封装
 - `src/utils/siteStorage.ts`：站点持久化与跨页面同步事件
+- `vite.config.ts`：Vite 构建配置与 vendor 分包策略
 - `src/types/site.ts`：站点/设备核心类型
 - `src/mock/`：当前演示数据源
 

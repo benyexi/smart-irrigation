@@ -1,5 +1,5 @@
 import { Card, Tag, Typography } from 'antd';
-import ReactECharts from 'echarts-for-react';
+import ReactECharts from '../../../components/ECharts/ReactECharts';
 import type { Sensor } from '../../../types/site';
 import {
   buildInitialSensorRuntime,

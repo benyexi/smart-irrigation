@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Tag } from 'antd';
 import { FullscreenOutlined, FullscreenExitOutlined, ReloadOutlined } from '@ant-design/icons';
-import ReactECharts from 'echarts-for-react';
+import ReactECharts from '../../components/ECharts/ReactECharts';
 import { mockMapSites, mockHistoryData, mockHistoryTimestamps, type MapSite } from '../../mock';
 import './Screen.css';
 

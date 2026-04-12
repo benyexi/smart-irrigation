@@ -5,7 +5,7 @@ import {
   ArrowUpOutlined,
 } from '@ant-design/icons';
 import { Button, Card, Col, Row, Select, Tag, Typography } from 'antd';
-import ReactECharts from 'echarts-for-react';
+import ReactECharts from '../../components/ECharts/ReactECharts';
 import { mockDashboard } from '../../mock';
 import type { Site } from '../../types/site';
 import SiteModal from '../Sites/SiteModal';
