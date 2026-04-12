@@ -1,32 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import {
-  Button,
-  Card,
-  Collapse,
-  Input,
-  InputNumber,
-  message,
-  Select,
-  Slider,
-  Space,
-  Table,
-  Tag,
-  Typography,
-} from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import ReactECharts from 'echarts-for-react';
-import {
-  ApiOutlined,
-  ClearOutlined,
-  CloudOutlined,
-  DisconnectOutlined,
-  DownloadOutlined,
-  PauseCircleOutlined,
-  PlayCircleOutlined,
-  PoweroffOutlined,
-  SendOutlined,
-  ThunderboltOutlined,
-} from '@ant-design/icons';
+import { message } from 'antd';
 import type { Sensor, Site } from '../../types/site';
 import { useMqttStatusListener } from '../../hooks/useMqttStatus';
 import { useMqttSubscription } from '../../hooks/useMqttSubscription';
@@ -39,56 +12,35 @@ import {
 import { getCurrentSiteId, getSites } from '../../utils/siteStorage';
 import {
   DEFAULT_BROKER,
-  buildInitialDeviceCommandState,
-  buildInitialSensorRuntime,
+  MAX_POINTS,
   sensorBaseMap,
   sensorRangeMap,
   sensorUnitMap,
-  MAX_POINTS,
-  type CommandEntry,
   type CommandStatus,
   type SelectedHistoryStatus,
   useMonitorStore,
 } from '../../stores/monitorStore';
+import MonitorCommandHistorySection from './components/MonitorCommandHistorySection';
+import MonitorControlSection from './components/MonitorControlSection';
+import MonitorLogPanel from './components/MonitorLogPanel';
+import MonitorSensorSection from './components/MonitorSensorSection';
+import MonitorSimulatorSection from './components/MonitorSimulatorSection';
+import MonitorTopbar from './components/MonitorTopbar';
+import { resolveDeviceId, sensorSortWeight } from './monitorViewShared';
 import './Monitor.css';
 
-const { Title, Text } = Typography;
-
-const FIVE_MINUTES = 5 * 60 * 1000;
-const SPARKLINE_HEIGHT = 60;
-
-const sensorTypeLabelMap: Record<Sensor['type'], string> = {
-  soil_moisture: '土壤水分',
-  soil_potential: '土壤水势',
-  weather_station: '气象站',
-  sapflow: '液流计',
-  stem_diameter: '茎径传感器',
-  leaf_turgor: '叶片膨压',
-  flow_meter: '流量计',
-  valve: '电磁阀',
-  pump: '水泵',
-};
-
-const sensorColorMap: Record<Sensor['type'], string> = {
-  soil_moisture: '#5f9eff',
-  soil_potential: '#5f9eff',
-  weather_station: '#db7f2f',
-  sapflow: '#0f9d80',
-  stem_diameter: '#0f9d80',
-  leaf_turgor: '#0f9d80',
-  flow_meter: '#1366ff',
-  valve: '#cf4453',
-  pump: '#c7962f',
-};
-
 const getTimestamp = () => Date.now();
-
-const createId = (prefix: string) => `${prefix}-${getTimestamp()}-${Math.random().toString(36).slice(2, 8)}`;
-
-const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+const createId = (prefix: string) =>
+  `${prefix}-${getTimestamp()}-${Math.random().toString(36).slice(2, 8)}`;
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(Math.max(value, min), max);
 
 const parsePacketBody = (packet: MqttMessage): Record<string, unknown> => {
-  if (packet.payload && typeof packet.payload === 'object' && !Array.isArray(packet.payload)) {
+  if (
+    packet.payload &&
+    typeof packet.payload === 'object' &&
+    !Array.isArray(packet.payload)
+  ) {
     return packet.payload as Record<string, unknown>;
   }
 
@@ -99,92 +51,12 @@ const parsePacketBody = (packet: MqttMessage): Record<string, unknown> => {
   }
 };
 
-const formatRelativeTime = (timestamp: number | null, now: number) => {
-  if (!timestamp) {
-    return '暂无数据';
-  }
-
-  const diff = Math.max(0, now - timestamp);
-  if (diff < 1000) {
-    return '刚刚';
-  }
-  if (diff < 60_000) {
-    return `${Math.floor(diff / 1000)} 秒前`;
-  }
-  if (diff < 3_600_000) {
-    return `${Math.floor(diff / 60_000)} 分钟前`;
-  }
-  return `${Math.floor(diff / 3_600_000)} 小时前`;
-};
-
-const formatDuration = (startedAt: number | null, now: number) => {
-  if (!startedAt) {
-    return '--';
-  }
-
-  const diff = Math.max(0, now - startedAt);
-  const hours = Math.floor(diff / 3_600_000);
-  const minutes = Math.floor((diff % 3_600_000) / 60_000);
-  const seconds = Math.floor((diff % 60_000) / 1000);
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-};
-
-const formatValue = (value: number | string | null, sensorType: Sensor['type']) => {
-  if (value === null || value === undefined) {
-    return '--';
-  }
-  if (typeof value === 'string') {
-    return value;
-  }
-  if (sensorType === 'stem_diameter' || sensorType === 'leaf_turgor') {
-    return value.toFixed(2);
-  }
-  if (sensorType === 'soil_potential') {
-    return Math.round(value).toString();
-  }
-  return value.toFixed(value >= 10 ? 1 : 2);
-};
-
-const makeSparklineOption = (history: number[], color: string) => ({
-  animation: false,
-  grid: { top: 4, right: 2, bottom: 2, left: 2 },
-  xAxis: { type: 'category', show: false, data: history.map((_, index) => index) },
-  yAxis: { type: 'value', show: false, min: 'dataMin', max: 'dataMax' },
-  series: [
-    {
-      type: 'line',
-      data: history,
-      smooth: true,
-      symbol: 'none',
-      lineStyle: { color, width: 2 },
-      areaStyle: {
-        color: {
-          type: 'linear',
-          x: 0,
-          y: 0,
-          x2: 0,
-          y2: 1,
-          colorStops: [
-            { offset: 0, color: `${color}66` },
-            { offset: 1, color: `${color}00` },
-          ],
-        },
-      },
-    },
-  ],
-  tooltip: { show: false },
-});
-
-const resolveDeviceId = (sensor: Sensor) => sensor.deviceId.trim() || sensor.id.trim();
-const getSensorTopic = (siteId: string, sensor: Sensor) => `siz/v1/${siteId}/sensor/${resolveDeviceId(sensor)}/data`;
-const getAckTopic = (siteId: string, sensor: Sensor) => `siz/v1/${siteId}/control/${resolveDeviceId(sensor)}/ack`;
-const getCmdTopic = (siteId: string, sensor: Sensor) => `siz/v1/${siteId}/control/${resolveDeviceId(sensor)}/cmd`;
-
-const sensorSortWeight = (type: Sensor['type']) => {
-  if (type === 'valve') return 9;
-  if (type === 'pump') return 10;
-  return 1;
-};
+const getSensorTopic = (siteId: string, sensor: Sensor) =>
+  `siz/v1/${siteId}/sensor/${resolveDeviceId(sensor)}/data`;
+const getAckTopic = (siteId: string, sensor: Sensor) =>
+  `siz/v1/${siteId}/control/${resolveDeviceId(sensor)}/ack`;
+const getCmdTopic = (siteId: string, sensor: Sensor) =>
+  `siz/v1/${siteId}/control/${resolveDeviceId(sensor)}/cmd`;
 
 const Monitor: React.FC = () => {
   const currentSiteId = useMemo(() => getCurrentSiteId(), []);
@@ -193,12 +65,22 @@ const Monitor: React.FC = () => {
     () => sites.find((site) => site.id === currentSiteId) ?? sites[0] ?? null,
     [currentSiteId, sites],
   );
+  const currentSiteName = currentSite?.name ?? '未找到站点';
   const sensors = useMemo(
-    () => (currentSite?.sensors ?? []).slice().sort((left, right) => sensorSortWeight(left.type) - sensorSortWeight(right.type)),
+    () =>
+      (currentSite?.sensors ?? [])
+        .slice()
+        .sort(
+          (left, right) =>
+            sensorSortWeight(left.type) - sensorSortWeight(right.type),
+        ),
     [currentSite],
   );
   const controlSensors = useMemo(
-    () => sensors.filter((sensor) => sensor.type === 'valve' || sensor.type === 'pump'),
+    () =>
+      sensors.filter(
+        (sensor) => sensor.type === 'valve' || sensor.type === 'pump',
+      ),
     [sensors],
   );
 
@@ -211,21 +93,40 @@ const Monitor: React.FC = () => {
   const simulator = useMonitorStore((state) => state.simulator);
   const commandHistory = useMonitorStore((state) => state.commandHistory);
   const deviceCommandState = useMonitorStore((state) => state.deviceCommandState);
-  const selectedHistoryStatus = useMonitorStore((state) => state.selectedHistoryStatus);
+  const selectedHistoryStatus = useMonitorStore(
+    (state) => state.selectedHistoryStatus,
+  );
   const resetRuntime = useMonitorStore((state) => state.resetRuntime);
   const setBroker = useMonitorStore((state) => state.setBroker);
   const setMqttStatus = useMonitorStore((state) => state.setMqttStatus);
   const appendLog = useMonitorStore((state) => state.appendLog);
   const clearLogs = useMonitorStore((state) => state.clearLogs);
   const setLogsPaused = useMonitorStore((state) => state.setLogsPaused);
-  const upsertSensorRuntime = useMonitorStore((state) => state.upsertSensorRuntime);
-  const upsertDeviceCommandState = useMonitorStore((state) => state.upsertDeviceCommandState);
+  const upsertSensorRuntime = useMonitorStore(
+    (state) => state.upsertSensorRuntime,
+  );
+  const upsertDeviceCommandState = useMonitorStore(
+    (state) => state.upsertDeviceCommandState,
+  );
   const updateSimulator = useMonitorStore((state) => state.updateSimulator);
-  const appendCommandHistory = useMonitorStore((state) => state.appendCommandHistory);
-  const setSelectedHistoryStatus = useMonitorStore((state) => state.setSelectedHistoryStatus);
+  const appendCommandHistory = useMonitorStore(
+    (state) => state.appendCommandHistory,
+  );
+  const setSelectedHistoryStatus = useMonitorStore(
+    (state) => state.setSelectedHistoryStatus,
+  );
 
   const ackWaitersRef = useRef(
-    new Map<string, { startedAt: number; deviceId: string; command: string; sensorId: string; timeoutId: number }>(),
+    new Map<
+      string,
+      {
+        startedAt: number;
+        deviceId: string;
+        command: string;
+        sensorId: string;
+        timeoutId: number;
+      }
+    >(),
   );
   const timerOpenMinutesRef = useRef<Record<string, number>>({});
   const simulatorTimerRef = useRef<number | null>(null);
@@ -246,53 +147,65 @@ const Monitor: React.FC = () => {
     }
 
     const rawValue = body.value;
-    const numericValue = typeof rawValue === 'number'
-      ? rawValue
-      : typeof rawValue === 'string' && rawValue.trim()
-        ? Number(rawValue)
-        : null;
-    const resolvedValue = sensor.type === 'valve'
-      ? String(body.state ?? body.value ?? '关闭')
-      : sensor.type === 'pump'
-        ? Number(body.frequencyHz ?? body.value ?? 38)
-        : numericValue;
-    const unit = typeof body.unit === 'string' ? body.unit : sensorUnitMap[sensor.type] ?? '';
+    const numericValue =
+      typeof rawValue === 'number'
+        ? rawValue
+        : typeof rawValue === 'string' && rawValue.trim()
+          ? Number(rawValue)
+          : null;
+    const resolvedValue =
+      sensor.type === 'valve'
+        ? String(body.state ?? body.value ?? '关闭')
+        : sensor.type === 'pump'
+          ? Number(body.frequencyHz ?? body.value ?? 38)
+          : numericValue;
+    const unit =
+      typeof body.unit === 'string' ? body.unit : sensorUnitMap[sensor.type] ?? '';
     const timestamp = typeof body.ts === 'number' ? body.ts : packet.timestamp;
 
     upsertSensorRuntime(sensor, (previous) => {
-      const nextHistoryValue = typeof resolvedValue === 'number'
-        ? resolvedValue
-        : previous.history[previous.history.length - 1] ?? sensorBaseMap[sensor.type];
+      const nextHistoryValue =
+        typeof resolvedValue === 'number'
+          ? resolvedValue
+          : previous.history[previous.history.length - 1] ??
+            sensorBaseMap[sensor.type];
       return {
         ...previous,
         latestValue: resolvedValue,
         unit,
         lastUpdatedAt: timestamp,
-        history: [...previous.history.slice(-(MAX_POINTS - 1)), nextHistoryValue],
+        history: [
+          ...previous.history.slice(-(MAX_POINTS - 1)),
+          nextHistoryValue,
+        ],
         flashing: true,
       };
     });
 
     if (sensor.type === 'valve' || sensor.type === 'pump') {
-      const runningFlag = typeof body.running === 'boolean'
-        ? body.running
-        : sensor.type === 'pump'
-          ? Number(body.frequencyHz ?? body.value ?? 0) > 0
-          : undefined;
+      const runningFlag =
+        typeof body.running === 'boolean'
+          ? body.running
+          : sensor.type === 'pump'
+            ? Number(body.frequencyHz ?? body.value ?? 0) > 0
+            : undefined;
 
       upsertDeviceCommandState(sensor, (previous) => ({
         ...previous,
-        valueLabel: sensor.type === 'valve'
-          ? String(body.state ?? resolvedValue)
-          : `${Number(body.frequencyHz ?? resolvedValue ?? 38).toFixed(1)} Hz`,
-        runtimeSince: sensor.type === 'pump'
-          ? runningFlag
-            ? previous.runtimeSince ?? timestamp
-            : null
-          : previous.runtimeSince ?? null,
-        frequencyHz: sensor.type === 'pump'
-          ? Number(body.frequencyHz ?? resolvedValue ?? previous.frequencyHz ?? 38)
-          : undefined,
+        valueLabel:
+          sensor.type === 'valve'
+            ? String(body.state ?? resolvedValue)
+            : `${Number(body.frequencyHz ?? resolvedValue ?? 38).toFixed(1)} Hz`,
+        runtimeSince:
+          sensor.type === 'pump'
+            ? runningFlag
+              ? previous.runtimeSince ?? timestamp
+              : null
+            : previous.runtimeSince ?? null,
+        frequencyHz:
+          sensor.type === 'pump'
+            ? Number(body.frequencyHz ?? resolvedValue ?? previous.frequencyHz ?? 38)
+            : undefined,
       }));
     }
 
@@ -319,8 +232,11 @@ const Monitor: React.FC = () => {
 
     const timestamp = packet.timestamp;
     const latencyMs = timestamp - waiter.startedAt;
-    const status: CommandStatus = String(body.status ?? 'ack') === 'ack' ? 'ack' : 'failed';
-    const sensor = controlSensors.find((item) => resolveDeviceId(item) === waiter.deviceId);
+    const status: CommandStatus =
+      String(body.status ?? 'ack') === 'ack' ? 'ack' : 'failed';
+    const sensor = controlSensors.find(
+      (item) => resolveDeviceId(item) === waiter.deviceId,
+    );
 
     appendCommandHistory({
       msgId,
@@ -335,7 +251,8 @@ const Monitor: React.FC = () => {
       upsertDeviceCommandState(sensor, (previous) => ({
         ...previous,
         status,
-        lastAction: status === 'ack' ? `${waiter.command} 已确认` : `${waiter.command} 失败`,
+        lastAction:
+          status === 'ack' ? `${waiter.command} 已确认` : `${waiter.command} 失败`,
         lastCommandAt: timestamp,
         runtimeSince: waiter.command.includes('启动') || waiter.command.includes('开启')
           ? previous.runtimeSince ?? timestamp
@@ -394,32 +311,33 @@ const Monitor: React.FC = () => {
 
       const now = getTimestamp();
       sensors.forEach((sensor) => {
-        const payload = sensor.type === 'valve'
-          ? {
-              siteId: currentSiteId,
-              deviceId: resolveDeviceId(sensor),
-              value: '关闭',
-              state: '关闭',
-              unit: '',
-              ts: now,
-            }
-          : sensor.type === 'pump'
+        const payload =
+          sensor.type === 'valve'
             ? {
                 siteId: currentSiteId,
                 deviceId: resolveDeviceId(sensor),
-                value: 38,
-                frequencyHz: 38,
-                running: false,
-                unit: 'Hz',
+                value: '关闭',
+                state: '关闭',
+                unit: '',
                 ts: now,
               }
-            : {
-                siteId: currentSiteId,
-                deviceId: resolveDeviceId(sensor),
-                value: sensorBaseMap[sensor.type],
-                unit: sensorUnitMap[sensor.type],
-                ts: now,
-              };
+            : sensor.type === 'pump'
+              ? {
+                  siteId: currentSiteId,
+                  deviceId: resolveDeviceId(sensor),
+                  value: 38,
+                  frequencyHz: 38,
+                  running: false,
+                  unit: 'Hz',
+                  ts: now,
+                }
+              : {
+                  siteId: currentSiteId,
+                  deviceId: resolveDeviceId(sensor),
+                  value: sensorBaseMap[sensor.type],
+                  unit: sensorUnitMap[sensor.type],
+                  ts: now,
+                };
 
         void publishMqtt(getSensorTopic(currentSiteId, sensor), payload);
       });
@@ -432,10 +350,15 @@ const Monitor: React.FC = () => {
     };
   }, [currentSiteId, sensors, setMqttStatus]);
 
-  useEffect(() => () => {
-    ackWaitersRef.current.forEach((waiter) => window.clearTimeout(waiter.timeoutId));
-    ackWaitersRef.current.clear();
-  }, []);
+  useEffect(
+    () => () => {
+      ackWaitersRef.current.forEach((waiter) =>
+        window.clearTimeout(waiter.timeoutId),
+      );
+      ackWaitersRef.current.clear();
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!simulator.running || !simulator.sensorId) {
@@ -452,7 +375,9 @@ const Monitor: React.FC = () => {
     }
 
     simulatorTimerRef.current = window.setInterval(() => {
-      const center = Number.isFinite(simulator.baseValue) ? simulator.baseValue : sensorBaseMap[sensor.type];
+      const center = Number.isFinite(simulator.baseValue)
+        ? simulator.baseValue
+        : sensorBaseMap[sensor.type];
       const wave = (Math.random() * 2 - 1) * simulator.rangeValue;
       const now = getTimestamp();
 
@@ -521,18 +446,29 @@ const Monitor: React.FC = () => {
     const content = logs
       .slice()
       .reverse()
-      .map((entry) => `${new Date(entry.timestamp).toLocaleString('zh-CN')} | ${entry.topic} | ${entry.payload}`)
+      .map(
+        (entry) =>
+          `${new Date(entry.timestamp).toLocaleString('zh-CN')} | ${entry.topic} | ${entry.payload}`,
+      )
       .join('\n');
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const blob = new Blob([content], {
+      type: 'text/plain;charset=utf-8',
+    });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `monitor-${currentSiteId}-${new Date().toISOString().slice(0, 19)}.log`;
+    anchor.download = `monitor-${currentSiteId}-${new Date()
+      .toISOString()
+      .slice(0, 19)}.log`;
     anchor.click();
     URL.revokeObjectURL(url);
   };
 
-  const sendCommand = async (sensor: Sensor, command: string, payloadExtra: Record<string, unknown> = {}) => {
+  const sendCommand = async (
+    sensor: Sensor,
+    command: string,
+    payloadExtra: Record<string, unknown> = {},
+  ) => {
     const msgId = createId('cmd');
     const startedAt = getTimestamp();
     const topic = getCmdTopic(currentSiteId, sensor);
@@ -627,7 +563,10 @@ const Monitor: React.FC = () => {
     const minutes = timerOpenMinutesRef.current[sensor.id] ?? 10;
     const now = getTimestamp();
 
-    void sendCommand(sensor, `定时开启 ${minutes} 分钟`, { open: true, durationMinutes: minutes });
+    void sendCommand(sensor, `定时开启 ${minutes} 分钟`, {
+      open: true,
+      durationMinutes: minutes,
+    });
     void publishMqtt(getSensorTopic(currentSiteId, sensor), {
       siteId: currentSiteId,
       deviceId: resolveDeviceId(sensor),
@@ -650,8 +589,13 @@ const Monitor: React.FC = () => {
     }, minutes * 60_000);
   };
 
-  const triggerPump = (sensor: Sensor, running: boolean, frequencyHz?: number) => {
-    const nextFrequency = frequencyHz ?? deviceCommandState[sensor.id]?.frequencyHz ?? 38;
+  const triggerPump = (
+    sensor: Sensor,
+    running: boolean,
+    frequencyHz?: number,
+  ) => {
+    const nextFrequency =
+      frequencyHz ?? deviceCommandState[sensor.id]?.frequencyHz ?? 38;
     const now = getTimestamp();
 
     void sendCommand(sensor, running ? '启动水泵' : '停止水泵', {
@@ -669,391 +613,84 @@ const Monitor: React.FC = () => {
     });
   };
 
-  const commandColumns: ColumnsType<CommandEntry> = [
-    {
-      title: '时间',
-      dataIndex: 'timestamp',
-      key: 'timestamp',
-      width: 170,
-      render: (timestamp: number) => new Date(timestamp).toLocaleString('zh-CN'),
-    },
-    {
-      title: '设备',
-      dataIndex: 'deviceId',
-      key: 'deviceId',
-      width: 120,
-    },
-    {
-      title: '指令',
-      dataIndex: 'command',
-      key: 'command',
-      width: 160,
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: 110,
-      render: (status: CommandStatus) => {
-        const color = status === 'ack' ? 'green' : status === 'pending' ? 'blue' : status === 'timeout' ? 'orange' : 'red';
-        const label = status === 'ack' ? '已确认' : status === 'pending' ? '发送中' : status === 'timeout' ? '超时' : '失败';
-        return <Tag color={color}>{label}</Tag>;
-      },
-    },
-    {
-      title: '响应耗时',
-      dataIndex: 'latencyMs',
-      key: 'latencyMs',
-      width: 120,
-      render: (latencyMs?: number) => latencyMs ? `${latencyMs} ms` : '--',
-    },
-  ];
+  const updatePumpFrequency = (sensor: Sensor, nextFrequency: number) => {
+    upsertDeviceCommandState(sensor, (previous) => ({
+      ...previous,
+      frequencyHz: nextFrequency,
+      valueLabel: `${nextFrequency.toFixed(1)} Hz`,
+    }));
+  };
 
   const filteredCommandHistory = useMemo(
-    () => (selectedHistoryStatus === 'all'
-      ? commandHistory
-      : commandHistory.filter((item) => item.status === selectedHistoryStatus)),
+    () =>
+      selectedHistoryStatus === 'all'
+        ? commandHistory
+        : commandHistory.filter(
+            (item) => item.status === selectedHistoryStatus,
+          ),
     [commandHistory, selectedHistoryStatus],
   );
 
   return (
     <div className="page-container monitor-page">
-      <div className="monitor-topbar">
-        <div className="monitor-topbar-left">
-          <span className={`monitor-status-dot is-${mqttStatus.state}`} />
-          <div>
-            <div className="monitor-topbar-title">MQTT 状态栏</div>
-            <div className="monitor-topbar-subtitle">
-              当前站点：{currentSite?.name ?? '未找到站点'} / {currentSiteId}
-            </div>
-          </div>
-        </div>
-
-        <div className="monitor-topbar-center">
-          <Input
-            prefix={<ApiOutlined />}
-            value={broker}
-            onChange={(event) => {
-              const nextBroker = event.target.value;
-              setBroker(nextBroker);
-            }}
-            placeholder="请输入 Broker 地址"
-          />
-          {mqttStatus.state === 'connected' ? (
-            <Button icon={<DisconnectOutlined />} onClick={disconnect}>
-              断开
-            </Button>
-          ) : (
-            <Button type="primary" icon={<CloudOutlined />} onClick={() => void connect()}>
-              连接
-            </Button>
-          )}
-        </div>
-
-        <div className="monitor-topbar-metrics">
-          <div className="monitor-metric-chip">
-            <span>连接状态</span>
-            <strong>{mqttStatus.state === 'connected' ? 'Connected' : mqttStatus.state === 'connecting' ? 'Connecting' : 'Disconnected'}</strong>
-          </div>
-          <div className="monitor-metric-chip">
-            <span>已连接时长</span>
-            <strong>{mqttStatus.state === 'connected' ? formatDuration(mqttStatus.connectedAt, nowTick) : '--'}</strong>
-          </div>
-          <div className="monitor-metric-chip">
-            <span>消息总数</span>
-            <strong>{messageCount}</strong>
-          </div>
-        </div>
-      </div>
+      <MonitorTopbar
+        mqttStatus={mqttStatus}
+        broker={broker}
+        currentSiteName={currentSiteName}
+        currentSiteId={currentSiteId}
+        messageCount={messageCount}
+        nowTick={nowTick}
+        onBrokerChange={setBroker}
+        onConnect={() => void connect()}
+        onDisconnect={disconnect}
+      />
 
       <div className="monitor-layout">
         <main className="monitor-main">
-          <section>
-            <div className="monitor-section-head">
-              <div>
-                <Title level={4}>传感器实时卡片</Title>
-                <Text>订阅 `siz/v1/{currentSiteId}/sensor/+/data`，最近 5 分钟有数据即判定在线。</Text>
-              </div>
-            </div>
-            <div className="monitor-sensor-grid">
-              {sensors.map((sensor) => {
-                const runtime = sensorStateMap[sensor.id] ?? buildInitialSensorRuntime(sensor);
-                const online = runtime.lastUpdatedAt ? nowTick - runtime.lastUpdatedAt <= FIVE_MINUTES : false;
-                return (
-                  <Card
-                    key={sensor.id}
-                    className={`monitor-sensor-card ${runtime.flashing ? 'is-flashing' : ''}`}
-                    bordered={false}
-                  >
-                    <div className="monitor-card-top">
-                      <div>
-                        <div className="monitor-card-device">{resolveDeviceId(sensor)}</div>
-                        <Tag color="blue">{sensorTypeLabelMap[sensor.type]}</Tag>
-                      </div>
-                      <Tag color={online ? 'green' : 'default'}>{online ? '在线' : '离线'}</Tag>
-                    </div>
-                    <div className="monitor-card-value">
-                      <span>{formatValue(runtime.latestValue, sensor.type)}</span>
-                      <small>{runtime.unit}</small>
-                    </div>
-                    <div className="monitor-card-meta">
-                      <span>{sensor.location || '未填写位置'}</span>
-                      <span>{formatRelativeTime(runtime.lastUpdatedAt, nowTick)}</span>
-                    </div>
-                    <ReactECharts
-                      option={makeSparklineOption(runtime.history, sensorColorMap[sensor.type])}
-                      style={{ height: SPARKLINE_HEIGHT }}
-                    />
-                  </Card>
-                );
-              })}
-            </div>
-          </section>
+          <MonitorSensorSection
+            currentSiteId={currentSiteId}
+            sensors={sensors}
+            sensorStateMap={sensorStateMap}
+            nowTick={nowTick}
+          />
 
-          <section>
-            <Collapse
-              defaultActiveKey={[]}
-              items={[
-                {
-                  key: 'simulator',
-                  label: '数据模拟器',
-                  children: (
-                    <div className="monitor-simulator-grid">
-                      <Select
-                        value={simulator.sensorId}
-                        placeholder="选择传感器"
-                        options={sensors.map((sensor) => ({
-                          value: sensor.id,
-                          label: `${resolveDeviceId(sensor)} · ${sensorTypeLabelMap[sensor.type]}`,
-                        }))}
-                        onChange={(value) => {
-                          const sensor = sensors.find((item) => item.id === value);
-                          updateSimulator((previous) => ({
-                            ...previous,
-                            sensorId: value,
-                            baseValue: sensor ? sensorBaseMap[sensor.type] : previous.baseValue,
-                            rangeValue: sensor ? sensorRangeMap[sensor.type] : previous.rangeValue,
-                          }));
-                        }}
-                      />
-                      <InputNumber
-                        value={simulator.baseValue}
-                        onChange={(value) => updateSimulator((previous) => ({ ...previous, baseValue: Number(value ?? previous.baseValue) }))}
-                        addonBefore="基准值"
-                      />
-                      <InputNumber
-                        value={simulator.rangeValue}
-                        onChange={(value) => updateSimulator((previous) => ({ ...previous, rangeValue: Number(value ?? previous.rangeValue) }))}
-                        addonBefore="波动范围"
-                      />
-                      <InputNumber
-                        value={simulator.intervalMs}
-                        min={500}
-                        step={500}
-                        onChange={(value) => updateSimulator((previous) => ({ ...previous, intervalMs: Number(value ?? previous.intervalMs) }))}
-                        addonBefore="发送间隔"
-                        addonAfter="ms"
-                      />
-                      {simulator.running ? (
-                        <Button icon={<PauseCircleOutlined />} onClick={() => updateSimulator((previous) => ({ ...previous, running: false }))}>
-                          停止
-                        </Button>
-                      ) : (
-                        <Button
-                          type="primary"
-                          icon={<PlayCircleOutlined />}
-                          onClick={() => {
-                            if (!simulator.sensorId) {
-                              message.warning('请选择一个传感器');
-                              return;
-                            }
-                            updateSimulator((previous) => ({ ...previous, running: true }));
-                          }}
-                        >
-                          开始
-                        </Button>
-                      )}
-                    </div>
-                  ),
-                },
-              ]}
-            />
-          </section>
+          <MonitorSimulatorSection
+            sensors={sensors}
+            simulator={simulator}
+            onUpdateSimulator={updateSimulator}
+            onMissingSensor={() => message.warning('请选择一个传感器')}
+            getBaseValue={(sensor) => sensorBaseMap[sensor.type]}
+            getRangeValue={(sensor) => sensorRangeMap[sensor.type]}
+          />
 
-          <section>
-            <div className="monitor-section-head">
-              <div>
-                <Title level={4}>控制面板</Title>
-                <Text>发布到 `siz/v1/{currentSiteId}/control/{'{deviceId}'}/cmd`，最多等待 10 秒 ack。</Text>
-              </div>
-            </div>
-            <div className="monitor-control-grid">
-              {controlSensors.map((sensor) => {
-                const state = deviceCommandState[sensor.id] ?? buildInitialDeviceCommandState(sensor);
-                const isPending = state.status === 'pending';
-                const statusColor = state.status === 'ack'
-                  ? 'green'
-                  : state.status === 'pending'
-                    ? 'blue'
-                    : state.status === 'timeout'
-                      ? 'orange'
-                      : state.status === 'failed'
-                        ? 'red'
-                        : 'default';
-                const statusLabel = state.status === 'ack'
-                  ? '已确认'
-                  : state.status === 'pending'
-                    ? '发送中'
-                    : state.status === 'timeout'
-                      ? '超时'
-                      : state.status === 'failed'
-                        ? '失败'
-                        : '空闲';
+          <MonitorControlSection
+            currentSiteId={currentSiteId}
+            controlSensors={controlSensors}
+            deviceCommandState={deviceCommandState}
+            nowTick={nowTick}
+            timerOpenMinutesRef={timerOpenMinutesRef}
+            onTriggerValve={triggerValve}
+            onTriggerValveTimed={triggerValveTimed}
+            onTriggerPump={triggerPump}
+            onUpdatePumpFrequency={updatePumpFrequency}
+          />
 
-                return (
-                  <Card key={sensor.id} className="monitor-control-card" bordered={false}>
-                    <div className="monitor-control-head">
-                      <div>
-                        <div className="monitor-card-device">{resolveDeviceId(sensor)}</div>
-                        <Tag color={sensor.type === 'valve' ? 'red' : 'gold'}>{sensorTypeLabelMap[sensor.type]}</Tag>
-                      </div>
-                      <Tag color={statusColor}>{statusLabel}</Tag>
-                    </div>
-                    <div className="monitor-control-state">{state.valueLabel ?? '--'}</div>
-                    <div className="monitor-control-subline">最后操作：{state.lastAction}</div>
-                    <div className="monitor-control-subline">
-                      {sensor.type === 'pump'
-                        ? `运行计时：${state.runtimeSince ? formatDuration(state.runtimeSince, nowTick) : '--'}`
-                        : `最后下发：${formatRelativeTime(state.lastCommandAt, nowTick)}`}
-                    </div>
-
-                    {sensor.type === 'valve' ? (
-                      <>
-                        <div className="monitor-action-row">
-                          <Button type="primary" icon={<ThunderboltOutlined />} loading={isPending} onClick={() => triggerValve(sensor, true)}>
-                            开启
-                          </Button>
-                          <Button icon={<PoweroffOutlined />} loading={isPending} onClick={() => triggerValve(sensor, false)}>
-                            停止
-                          </Button>
-                        </div>
-                        <div className="monitor-timed-row">
-                          <InputNumber
-                            min={1}
-                            max={240}
-                            defaultValue={10}
-                            addonAfter="分钟"
-                            onChange={(value) => {
-                              timerOpenMinutesRef.current[sensor.id] = Number(value ?? 10);
-                            }}
-                          />
-                          <Button icon={<SendOutlined />} loading={isPending} onClick={() => triggerValveTimed(sensor)}>
-                            定时开启
-                          </Button>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="monitor-action-row">
-                          <Button type="primary" icon={<PlayCircleOutlined />} loading={isPending} onClick={() => triggerPump(sensor, true, state.frequencyHz)}>
-                            启动
-                          </Button>
-                          <Button icon={<PoweroffOutlined />} loading={isPending} onClick={() => triggerPump(sensor, false, state.frequencyHz)}>
-                            停止
-                          </Button>
-                        </div>
-                        <div className="monitor-frequency-block">
-                          <div className="monitor-frequency-head">
-                            <span>频率设定</span>
-                            <strong>{(state.frequencyHz ?? 38).toFixed(1)} Hz</strong>
-                          </div>
-                          <Slider
-                            min={30}
-                            max={50}
-                            step={0.5}
-                            value={state.frequencyHz ?? 38}
-                            onChange={(value) => {
-                              const nextFrequency = Number(value);
-                              upsertDeviceCommandState(sensor, (previous) => ({
-                                ...previous,
-                                frequencyHz: nextFrequency,
-                                valueLabel: `${nextFrequency.toFixed(1)} Hz`,
-                              }));
-                            }}
-                          />
-                        </div>
-                      </>
-                    )}
-                  </Card>
-                );
-              })}
-            </div>
-          </section>
-
-          <section>
-            <div className="monitor-section-head">
-              <div>
-                <Title level={4}>指令历史</Title>
-                <Text>最近 50 条控制结果，支持按状态筛选。</Text>
-              </div>
-              <Select
-                value={selectedHistoryStatus}
-                style={{ width: 140 }}
-                options={[
-                  { value: 'all', label: '全部状态' },
-                  { value: 'pending', label: '发送中' },
-                  { value: 'ack', label: '已确认' },
-                  { value: 'timeout', label: '超时' },
-                  { value: 'failed', label: '失败' },
-                ]}
-                onChange={(value) => setSelectedHistoryStatus(value as SelectedHistoryStatus)}
-              />
-            </div>
-            <Card bordered={false} className="monitor-history-card">
-              <Table
-                size="small"
-                rowKey="id"
-                columns={commandColumns}
-                dataSource={filteredCommandHistory}
-                pagination={{ pageSize: 6, hideOnSinglePage: true }}
-              />
-            </Card>
-          </section>
+          <MonitorCommandHistorySection
+            filteredCommandHistory={filteredCommandHistory}
+            selectedHistoryStatus={selectedHistoryStatus}
+            onStatusChange={(value) =>
+              setSelectedHistoryStatus(value as SelectedHistoryStatus)
+            }
+          />
         </main>
 
-        <aside className="monitor-log-panel">
-          <div className="monitor-log-head">
-            <div>
-              <Title level={5}>原始消息日志</Title>
-              <Text>最近 100 条 MQTT 原始消息</Text>
-            </div>
-            <Space wrap>
-              <Button size="small" icon={<ClearOutlined />} onClick={() => clearLogs()}>
-                清空
-              </Button>
-              <Button
-                size="small"
-                icon={logsPaused ? <PlayCircleOutlined /> : <PauseCircleOutlined />}
-                onClick={() => setLogsPaused(!logsPaused)}
-              >
-                {logsPaused ? '恢复' : '暂停'}
-              </Button>
-              <Button size="small" icon={<DownloadOutlined />} onClick={exportLogs}>
-                导出.log
-              </Button>
-            </Space>
-          </div>
-          <div className="monitor-log-list">
-            {logs.map((entry) => (
-              <article key={entry.id} className="monitor-log-entry">
-                <div className="monitor-log-time">{new Date(entry.timestamp).toLocaleTimeString('zh-CN')}</div>
-                <div className="monitor-log-topic">{entry.topic}</div>
-                <pre className="monitor-log-payload">{entry.payload}</pre>
-              </article>
-            ))}
-            {logs.length === 0 ? <div className="monitor-log-empty">暂无消息</div> : null}
-          </div>
-        </aside>
+        <MonitorLogPanel
+          logs={logs}
+          logsPaused={logsPaused}
+          onClear={clearLogs}
+          onTogglePause={() => setLogsPaused(!logsPaused)}
+          onExport={exportLogs}
+        />
       </div>
     </div>
   );
