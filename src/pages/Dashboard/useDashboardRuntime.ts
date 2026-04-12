@@ -81,6 +81,7 @@ export const useDashboardRuntime = () => {
     currentSiteId ? `siz/v1/${currentSiteId}/sensor/+/data` : null,
     handleTelemetry,
     Boolean(currentSiteId),
+    { autoConnect: false },
   );
 
   return {

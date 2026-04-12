@@ -12,6 +12,9 @@ export type MqttMessage = {
 const DEFAULT_BROKER_URL = 'wss://broker.emqx.io:8084/mqtt';
 
 type MqttHandler = (msg: MqttMessage) => void;
+type SubscribeOptions = {
+  autoConnect?: boolean;
+};
 
 type HandlerSet = Set<MqttHandler>;
 
@@ -227,24 +230,36 @@ export const getMqttStatus = (): MqttStatus => status;
 
 export const getMqttBrokerUrl = (): string => brokerUrl;
 
-export const subscribeMqtt = (topic: string, handler: MqttHandler): (() => void) => {
+export const subscribeMqtt = (
+  topic: string,
+  handler: MqttHandler,
+  options: SubscribeOptions = {},
+): (() => void) => {
   const filter = normalizeTopic(topic);
   const handlers = topicHandlers.get(filter) ?? new Set<MqttHandler>();
   handlers.add(handler);
   topicHandlers.set(filter, handlers);
+  const { autoConnect = true } = options;
 
-  void ensureConnected().then(() => {
-    if (!client || status !== 'connected') {
-      return;
-    }
+  if (autoConnect) {
+    void ensureConnected().then(() => {
+      if (!client || status !== 'connected') {
+        return;
+      }
 
-    if (!activeSubscriptions.has(filter)) {
-      activeSubscriptions.add(filter);
-      client.subscribe(filter, { qos: 0 }, () => {
-        // Subscription acknowledgements are intentionally ignored here.
-      });
-    }
-  });
+      if (!activeSubscriptions.has(filter)) {
+        activeSubscriptions.add(filter);
+        client.subscribe(filter, { qos: 0 }, () => {
+          // Subscription acknowledgements are intentionally ignored here.
+        });
+      }
+    });
+  } else if (client && status === 'connected' && !activeSubscriptions.has(filter)) {
+    activeSubscriptions.add(filter);
+    client.subscribe(filter, { qos: 0 }, () => {
+      // Subscription acknowledgements are intentionally ignored here.
+    });
+  }
 
   return () => {
     unsubscribeMqtt(filter, handler);

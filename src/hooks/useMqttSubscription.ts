@@ -2,13 +2,18 @@ import { useEffect, useRef } from 'react';
 import { subscribeMqtt, type MqttMessage } from '../utils/mqttClient';
 
 type MqttMessageHandler = (message: MqttMessage) => void;
+type UseMqttSubscriptionOptions = {
+  autoConnect?: boolean;
+};
 
 export const useMqttSubscription = (
   topic: string | null | undefined,
   handler: MqttMessageHandler,
   enabled = true,
+  options?: UseMqttSubscriptionOptions,
 ) => {
   const handlerRef = useRef(handler);
+  const autoConnect = options?.autoConnect ?? true;
 
   useEffect(() => {
     handlerRef.current = handler;
@@ -21,6 +26,6 @@ export const useMqttSubscription = (
 
     return subscribeMqtt(topic, (message) => {
       handlerRef.current(message);
-    });
-  }, [enabled, topic]);
+    }, { autoConnect });
+  }, [autoConnect, enabled, topic]);
 };

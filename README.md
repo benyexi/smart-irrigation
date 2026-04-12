@@ -120,6 +120,7 @@
 - `App.tsx` 已改为路由级 `lazy + Suspense` 分包，登录页与重页面不再一次性打进同一个首包。
 - 图表层已从整包 `echarts-for-react` 切到按需注册的 `ReactEChartsCore` 包装组件，当前只注册 `line / bar / gauge / radar / pie` 所需能力，显著压缩了 ECharts vendor 包。
 - `mqttClient.ts` 已改为运行时动态加载 `mqtt` 库，未进入监控链路或未发起连接前，不再预先拉取 MQTT 浏览器依赖。
+- `Dashboard` 已改为被动 MQTT 订阅：看板只消费现有连接，不再自己主动拉起 Broker 连接，主动连接职责收口到 `Monitor`。
 - `DeferredEChart` 已接入 Dashboard / History / Monitor / Screen，页面框架会先渲染，图表随后异步挂载，降低图表初始化对首屏可见内容的阻塞。
 - `SiteModal` 已改成在 Dashboard / Sites 中按需懒加载，进入页面时不再把站点配置大弹窗作为静态首依赖一起拉取。
 - `History` 页已进一步拆成主页面、数据表格组件、报告弹窗组件三段，表格和报告生成逻辑改为独立异步块。
