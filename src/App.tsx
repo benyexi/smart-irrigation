@@ -79,12 +79,6 @@ const appTheme = {
       hoverBorderColor: '#1366ff',
       activeShadow: '0 0 0 3px rgba(19, 102, 255, 0.12)',
     },
-    Select: {
-      colorBgContainer: '#f7fafd',
-      colorBorder: 'rgba(15, 23, 42, 0.14)',
-      optionSelectedBg: 'rgba(19, 102, 255, 0.12)',
-      optionActiveBg: 'rgba(19, 102, 255, 0.07)',
-    },
     Button: {
       colorPrimary: '#1366ff',
       colorPrimaryHover: '#0f56d8',

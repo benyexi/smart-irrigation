@@ -1,5 +1,6 @@
 import { PauseCircleOutlined, PlayCircleOutlined } from '@ant-design/icons';
-import { Button, Collapse, InputNumber, Select } from 'antd';
+import { Button, Collapse, InputNumber } from 'antd';
+import LiteSelect from '../../../components/Inputs/LiteSelect';
 import type { Sensor } from '../../../types/site';
 import type { SimulatorState } from '../../../stores/monitorStore';
 import {
@@ -35,7 +36,7 @@ const MonitorSimulatorSection = ({
           label: '数据模拟器',
           children: (
             <div className="monitor-simulator-grid">
-              <Select
+              <LiteSelect
                 value={simulator.sensorId}
                 placeholder="选择传感器"
                 options={sensors.map((sensor) => ({

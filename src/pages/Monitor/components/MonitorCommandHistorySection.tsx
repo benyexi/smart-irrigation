@@ -1,4 +1,5 @@
-import { Card, Select, Tag, Typography } from 'antd';
+import { Card, Tag, Typography } from 'antd';
+import LiteSelect from '../../../components/Inputs/LiteSelect';
 import LiteTable, { type LiteTableColumn } from '../../../components/Tables/LiteTable';
 import type {
   CommandEntry,
@@ -79,7 +80,7 @@ const MonitorCommandHistorySection = ({
         <Title level={4}>指令历史</Title>
         <Text>最近 50 条控制结果，支持按状态筛选。</Text>
       </div>
-      <Select
+      <LiteSelect
         value={selectedHistoryStatus}
         style={{ width: 140 }}
         options={[

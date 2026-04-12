@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useState, useCallback } from 'react';
-import { Row, Col, Card, Slider, Button, Progress, Typography, Divider, Select, Skeleton } from 'antd';
+import { Row, Col, Card, Slider, Button, Progress, Typography, Divider, Skeleton } from 'antd';
 import { PlayCircleOutlined, ThunderboltOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import LiteSelect from '../../components/Inputs/LiteSelect';
 import type { DecisionLog } from './components/EngineLogTable';
 
 const { Title, Text } = Typography;
@@ -130,7 +131,7 @@ const Engine: React.FC = () => {
           <Card title="输入参数" style={{ marginBottom: 16 }}>
             <div style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>决策模式</div>
-              <Select value={mode} onChange={setMode} style={{ width: '100%' }} options={modeOptions} />
+              <LiteSelect value={mode} onChange={setMode} style={{ width: '100%' }} options={modeOptions} />
             </div>
             <Divider style={{ margin: '12px 0', borderColor: 'var(--border-base)' }} />
             {[

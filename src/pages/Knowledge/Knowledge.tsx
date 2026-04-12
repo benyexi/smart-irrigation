@@ -4,13 +4,13 @@ import {
   Descriptions,
   Drawer,
   Input,
-  Select,
   Skeleton,
   Space,
   Tabs,
   Typography,
 } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
+import LiteSelect from '../../components/Inputs/LiteSelect';
 import {
   alarmThresholdReferenceTable,
   decisionModeComparisonTable,
@@ -142,7 +142,7 @@ const Knowledge: React.FC = () => {
             style={{ width: 360, maxWidth: '100%' }}
           />
           {activeTab === 'plants' ? (
-            <Select
+            <LiteSelect
               value={plantCategory}
               style={{ width: 180 }}
               onChange={(value) => setPlantCategory(value as 'all' | PlantCategory)}

@@ -1,8 +1,9 @@
 import React, { Suspense, lazy, useMemo, useState } from 'react';
-import { Row, Col, Card, Select, Button, Typography, Space, Skeleton, message } from 'antd';
+import { Row, Col, Card, Button, Typography, Space, Skeleton, message } from 'antd';
 import { DownloadOutlined, FileTextOutlined } from '@ant-design/icons';
 import DeferredEChart from '../../components/ECharts/DeferredEChart';
 import LiteDateRange from '../../components/Inputs/LiteDateRange';
+import { LiteMultiSelect } from '../../components/Inputs/LiteSelect';
 import type { LiteTableColumn } from '../../components/Tables/LiteTable';
 import { mockHistoryData, mockHistoryTimestamps, metricLabels, mockSites } from '../../mock';
 
@@ -95,8 +96,13 @@ ${tableData.slice(0,20).map(r=>`<tr><td>${r.time}</td>${selectedMetrics.map(m=>`
         <Row gutter={12} align="middle">
           <Col><LiteDateRange compact width={260} /></Col>
           <Col flex="auto">
-            <Select mode="multiple" value={selectedMetrics} onChange={setSelectedMetrics} style={{ width: '100%' }}
-              options={metrics.map(m => ({ value: m, label: metricLabels[m] ?? m }))} maxTagCount={3} />
+            <LiteMultiSelect
+              value={selectedMetrics}
+              onChange={setSelectedMetrics}
+              style={{ width: '100%' }}
+              options={metrics.map(m => ({ value: m, label: metricLabels[m] ?? m }))}
+              placeholder="选择指标"
+            />
           </Col>
         </Row>
       </Card>

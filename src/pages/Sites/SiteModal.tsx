@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Input, InputNumber, Modal, Select, Skeleton, Space, Steps, message } from 'antd';
+import { Button, Input, InputNumber, Modal, Skeleton, Space, Steps, message } from 'antd';
+import LiteSelect from '../../components/Inputs/LiteSelect';
 import type { LiteTableColumn } from '../../components/Tables/LiteTable';
 import { plantRecommendations } from '../../mock/knowledge';
 import { useSiteStore } from '../../stores/siteStore';
@@ -481,11 +482,11 @@ const SiteModal: React.FC<SiteModalProps> = ({
       dataIndex: 'type',
       width: 140,
       render: (_, sensor) => (
-        <Select
+        <LiteSelect
           value={sensor.type}
           style={{ width: 124 }}
           options={sensorTypeOptions}
-          onChange={(value) => updateSensor(sensor.id, { type: value })}
+          onChange={(value) => updateSensor(sensor.id, { type: value as Sensor['type'] })}
         />
       ),
     },

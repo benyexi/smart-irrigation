@@ -1,0 +1,91 @@
+.lite-select-shell {
+  position: relative;
+  width: 100%;
+}
+
+.lite-select {
+  width: 100%;
+  min-height: 36px;
+  border-radius: 12px;
+  border: 1px solid var(--border-base);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text-primary);
+  padding: 0 38px 0 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+    linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 2px),
+    calc(100% - 12px) calc(50% - 2px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lite-select:hover {
+  border-color: color-mix(in srgb, var(--primary) 48%, var(--border-base));
+}
+
+.lite-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(19, 102, 255, 0.12);
+}
+
+.lite-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.lite-select.is-placeholder {
+  color: var(--text-muted);
+}
+
+.lite-multi-select {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  border: 1px solid var(--border-base);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.lite-multi-select__tag {
+  border: 1px solid color-mix(in srgb, var(--border-base) 82%, white);
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  line-height: 1;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.lite-multi-select__tag:hover {
+  border-color: color-mix(in srgb, var(--primary) 42%, var(--border-base));
+  color: var(--text-primary);
+}
+
+.lite-multi-select__tag.is-active {
+  border-color: rgba(19, 102, 255, 0.28);
+  background: rgba(19, 102, 255, 0.1);
+  color: #1366ff;
+}
+
+.lite-multi-select__tag:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.lite-multi-select__placeholder {
+  font-size: 12px;
+  color: var(--text-muted);
+  align-self: center;
+}

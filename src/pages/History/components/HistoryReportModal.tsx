@@ -1,5 +1,6 @@
-import { Button, Form, Modal, Select } from 'antd';
+import { Button, Form, Modal } from 'antd';
 import LiteDateRange from '../../../components/Inputs/LiteDateRange';
+import LiteSelect from '../../../components/Inputs/LiteSelect';
 
 interface HistoryReportModalProps {
   open: boolean;
@@ -33,7 +34,7 @@ const HistoryReportModal = ({
       <Form.Item
         label="报告类型"
       >
-        <Select
+        <LiteSelect
           defaultValue="daily"
           options={[
             { value: 'daily', label: '日报' },
@@ -43,7 +44,7 @@ const HistoryReportModal = ({
         />
       </Form.Item>
       <Form.Item label="站点">
-        <Select defaultValue="site001" options={siteOptions} />
+        <LiteSelect defaultValue="site001" options={siteOptions} />
       </Form.Item>
       <Form.Item label="时间范围">
         <LiteDateRange />

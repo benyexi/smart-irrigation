@@ -1,5 +1,6 @@
 import React from 'react';
-import { Alert, Col, Form, InputNumber, Radio, Row, Select, Slider, Tag, Tooltip } from 'antd';
+import { Alert, Col, Form, InputNumber, Radio, Row, Slider, Tag, Tooltip } from 'antd';
+import LiteSelect, { LiteMultiSelect } from '../../../components/Inputs/LiteSelect';
 import type { ModeParams, Site } from '../../../types/site';
 
 type DecisionModeId = 1 | 2 | 3 | 4 | 5;
@@ -161,11 +162,11 @@ const SiteDecisionModeStep: React.FC<SiteDecisionModeStepProps> = ({
               </Col>
               <Col span={8}>
                 <Form.Item label="参考深度">
-                  <Select
-                    mode="multiple"
-                    value={modeParams.referenceDepths}
+                  <LiteMultiSelect
+                    value={modeParams.referenceDepths ?? []}
                     options={referenceDepthOptions.map((item) => ({ value: item, label: item }))}
                     onChange={(value) => onUpdateModeParams({ referenceDepths: value })}
+                    placeholder="选择参考深度"
                   />
                 </Form.Item>
               </Col>
@@ -196,7 +197,7 @@ const SiteDecisionModeStep: React.FC<SiteDecisionModeStepProps> = ({
               </Col>
               <Col span={8}>
                 <Form.Item label="参考深度">
-                  <Select
+                  <LiteSelect
                     value={modeParams.referenceDepths ? modeParams.referenceDepths[0] : undefined}
                     options={referenceDepthOptions.map((item) => ({ value: item, label: item }))}
                     onChange={(value) => onUpdateModeParams({ referenceDepths: [value] })}

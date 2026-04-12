@@ -9,7 +9,8 @@ import {
   HistoryOutlined,
   RadarChartOutlined,
 } from '@ant-design/icons';
-import { Button, Card, Col, Form, Input, Row, Select, Typography, message } from 'antd';
+import { Button, Card, Col, Form, Input, Row, Typography, message } from 'antd';
+import LiteSelect from '../../components/Inputs/LiteSelect';
 import './Landing.css';
 
 const { Title, Paragraph, Text } = Typography;
@@ -337,7 +338,7 @@ const Landing: React.FC = () => {
               </Col>
               <Col xs={24} md={12}>
                 <Form.Item label="种植类型" name="cropType" rules={[{ required: true, message: '请选择种植类型' }]}> 
-                  <Select
+                  <LiteSelect
                     options={[
                       { value: 'forest', label: '林木' },
                       { value: 'orchard', label: '果树' },

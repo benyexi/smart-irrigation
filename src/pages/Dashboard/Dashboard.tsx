@@ -4,7 +4,8 @@ import {
   ArrowDownOutlined,
   ArrowUpOutlined,
 } from '@ant-design/icons';
-import { Button, Card, Col, Row, Select, Tag, Typography } from 'antd';
+import { Button, Card, Col, Row, Tag, Typography } from 'antd';
+import LiteSelect from '../../components/Inputs/LiteSelect';
 import DeferredEChart from '../../components/ECharts/DeferredEChart';
 import { mockDashboard } from '../../mock';
 import type { Site } from '../../types/site';
@@ -105,7 +106,7 @@ const Dashboard: React.FC = () => {
               {mqttStatus === 'connected' ? '实时' : '离线'}
             </span>
           </div>
-          <Select
+          <LiteSelect
             value={site ? site.id : selectedSite}
             onChange={handleSiteChange}
             style={{ width: 220 }}

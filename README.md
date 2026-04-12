@@ -129,6 +129,7 @@
 - `SiteDecisionModeStep` 已移除 `TimePicker/dayjs` 链路，改用原生时间输入，避免单个步骤块异常膨胀。
 - `History` 页已进一步拆成主页面、数据表格组件、报告弹窗组件三段，表格和报告生成逻辑改为独立异步块。
 - `History / Alerts / HistoryReportModal` 已移除 Ant Design `DatePicker`，改用原生日期输入封装的 `LiteDateRange`，构建产物中的 `date-picker` 重块已被消除。
+- `Dashboard / Landing / History / Knowledge / Engine / Monitor / SiteModal` 中原先分散的 Ant Design `Select` 已统一替换为 `LiteSelect / LiteMultiSelect`，`select` 构建块已消失。
 - `Alerts` 表格、`IoT` Topic 规范表格、`Monitor` 指令历史表格都已继续改为按需异步加载，不再作为对应页面的首屏静态依赖。
 - `Knowledge` 三个 Tab 的表格和 `Engine` 决策日志表也已拆成独立异步块，只有进入对应内容时才加载对应表格组件。
 - `History / Alerts / IoT / Engine / Monitor / Knowledge / SiteModal` 的表格已统一收口到自研 `LiteTable`，知识库仍保留列排序，站点配置仍保留行内编辑与大画布联动，但已不再依赖 Ant Design Table。
@@ -189,6 +190,7 @@ npm run deploy
 - `src/components/ECharts/DeferredEChart.tsx`：图表延迟加载包装组件
 - `src/components/ECharts/ReactECharts.tsx`：轻量图表包装组件，负责按需注入 ECharts 浏览器运行时并驱动实例
 - `src/components/Inputs/LiteDateRange.tsx`：轻量日期区间输入组件，替代重型日期选择器
+- `src/components/Inputs/LiteSelect.tsx`：轻量单选/多选输入组件，现已替代全站业务 `Select`
 - `src/components/Tables/LiteTable.tsx`：轻量表格组件，现已承接全站业务表格，并支持轻量排序/分页/滚动
 - `public/mqtt.min.js`：MQTT 浏览器运行时脚本，按需动态注入
 - `public/echarts.min.js`：ECharts 浏览器运行时脚本，按需动态注入

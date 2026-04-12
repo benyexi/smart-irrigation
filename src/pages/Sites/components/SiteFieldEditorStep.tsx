@@ -1,5 +1,6 @@
 import React from 'react';
-import { Badge, Button, InputNumber, Select, Space, Switch } from 'antd';
+import { Badge, Button, InputNumber, Space, Switch } from 'antd';
+import LiteSelect from '../../../components/Inputs/LiteSelect';
 import LiteTable, { type LiteTableColumn } from '../../../components/Tables/LiteTable';
 import type { Pipeline, Sensor } from '../../../types/site';
 import type { PlantLayoutSettings } from '../fieldTemplates';
@@ -211,12 +212,12 @@ const SiteFieldEditorStep = ({
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 1fr) minmax(160px, 220px)', gap: 12 }}>
             <div style={{ display: 'grid', gap: 8 }}>
               <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>快速添加设备类型</span>
-              <Select
-                allowClear
+              <LiteSelect
                 placeholder="点击空白处时直接落点添加"
                 value={quickAddType}
                 options={quickAddOptions}
-                onChange={(value) => onQuickAddTypeChange(value)}
+                onChange={(value) => onQuickAddTypeChange(value as QuickAddSensorType)}
+                allowClear
               />
             </div>
             <div
@@ -255,7 +256,7 @@ const SiteFieldEditorStep = ({
             </div>
             <div style={{ display: 'grid', gap: 8 }}>
               <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>方向</span>
-              <Select
+              <LiteSelect
                 value={plantLayout.orientation}
                 options={[
                   { value: 'horizontal', label: '横向' },

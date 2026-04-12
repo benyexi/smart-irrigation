@@ -1,5 +1,6 @@
 import React from 'react';
-import { Card, Col, Form, Input, InputNumber, Radio, Row, Select } from 'antd';
+import { Card, Col, Form, Input, InputNumber, Radio, Row } from 'antd';
+import LiteSelect from '../../../components/Inputs/LiteSelect';
 import type { Site } from '../../../types/site';
 
 export interface SiteBasicInfoStepValue {
@@ -53,11 +54,11 @@ const SiteBasicInfoStep: React.FC<SiteBasicInfoStepProps> = ({
           />
         </Form.Item>
         <Form.Item label="省份">
-          <Select
+          <LiteSelect
             value={value.province}
             options={provinces.map((item) => ({ value: item, label: item }))}
             onChange={(nextValue) => onChange({ province: nextValue })}
-            showSearch
+            placeholder="请选择省份"
           />
         </Form.Item>
         <Form.Item label="城市">
@@ -88,21 +89,21 @@ const SiteBasicInfoStep: React.FC<SiteBasicInfoStepProps> = ({
 
       <Col span={12}>
         <Form.Item label="植物类型">
-          <Select
+          <LiteSelect
             value={value.plantType}
             options={plantOptions.map((item) => ({ value: item, label: item }))}
             onChange={onPlantTypeChange}
           />
         </Form.Item>
         <Form.Item label="土壤类型">
-          <Select
+          <LiteSelect
             value={value.soilType}
             options={soilOptions.map((item) => ({ value: item, label: item }))}
             onChange={(nextValue) => onChange({ soilType: nextValue })}
           />
         </Form.Item>
         <Form.Item label="气候分区">
-          <Select
+          <LiteSelect
             value={value.climateZone}
             options={climateOptions.map((item) => ({ value: item, label: item }))}
             onChange={(nextValue) => onChange({ climateZone: nextValue })}
