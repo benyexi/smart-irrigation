@@ -1,4 +1,4 @@
-import mqtt, { type IClientOptions, type MqttClient } from 'mqtt';
+import type { IClientOptions, MqttClient } from 'mqtt';
 
 export type MqttStatus = 'connected' | 'disconnected';
 
@@ -17,6 +17,7 @@ type HandlerSet = Set<MqttHandler>;
 
 const topicHandlers = new Map<string, HandlerSet>();
 const statusListeners = new Set<(status: MqttStatus) => void>();
+let mqttModulePromise: Promise<typeof import('mqtt')> | null = null;
 
 let client: MqttClient | null = null;
 let status: MqttStatus = 'disconnected';
@@ -75,6 +76,14 @@ const createMessage = (topic: string, payload: unknown): MqttMessage => {
 };
 
 const normalizeTopic = (value: string): string => value.trim();
+
+const loadMqttModule = async () => {
+  if (!mqttModulePromise) {
+    mqttModulePromise = import('mqtt');
+  }
+
+  return mqttModulePromise;
+};
 
 const releaseClient = (preserveHandlers: boolean) => {
   if (client) {
@@ -166,6 +175,7 @@ export const connectMqtt = async (nextBrokerUrl: string = DEFAULT_BROKER_URL): P
 
   brokerUrl = normalizedBrokerUrl;
   const currentToken = ++connectToken;
+  const mqtt = await loadMqttModule();
 
   connectPromise = new Promise<void>((resolve, reject) => {
     const options: IClientOptions = {

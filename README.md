@@ -119,6 +119,7 @@
 - 站点数据链路已收口为 `SiteModal / 页面 -> siteStore -> siteRepository -> siteStorage(localStorage)`，后续替换真实后端时优先改 repository 实现，不需要逐页回改。
 - `App.tsx` 已改为路由级 `lazy + Suspense` 分包，登录页与重页面不再一次性打进同一个首包。
 - 图表层已从整包 `echarts-for-react` 切到按需注册的 `ReactEChartsCore` 包装组件，当前只注册 `line / bar / gauge / radar / pie` 所需能力，显著压缩了 ECharts vendor 包。
+- `mqttClient.ts` 已改为运行时动态加载 `mqtt` 库，未进入监控链路或未发起连接前，不再预先拉取 MQTT 浏览器依赖。
 - 知识库表格已取消固定右列方案，改为稳定的横向滚动与省略显示，避免列叠压。
 
 ---
