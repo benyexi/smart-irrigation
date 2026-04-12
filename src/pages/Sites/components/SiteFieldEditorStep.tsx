@@ -1,6 +1,6 @@
 import React from 'react';
-import { Badge, Button, InputNumber, Select, Space, Switch, Table } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
+import { Badge, Button, InputNumber, Select, Space, Switch } from 'antd';
+import LiteTable, { type LiteTableColumn } from '../../../components/Tables/LiteTable';
 import type { Pipeline, Sensor } from '../../../types/site';
 import type { PlantLayoutSettings } from '../fieldTemplates';
 import type { DrawMode, PlantPosition, QuickAddSensorType } from './siteModalShared';
@@ -9,7 +9,7 @@ import { clampPercent, quickAddOptions, sensorColor, sensorTypeLabel } from './s
 interface SiteFieldEditorStepProps {
   sensors: Sensor[];
   pipelines: Pipeline[];
-  sensorColumns: ColumnsType<Sensor>;
+  sensorColumns: LiteTableColumn<Sensor>[];
   sensorTypeStats: Array<{ type: Sensor['type']; label: string; count: number }>;
   drawMode: DrawMode;
   pipeStart: { x: number; y: number } | null;
@@ -166,14 +166,13 @@ const SiteFieldEditorStep = ({
           )) : <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>暂无已布设传感器</span>}
         </div>
 
-        <Table<Sensor>
+        <LiteTable<Sensor>
           className="site-sensor-table"
-          size="small"
           rowKey="id"
           columns={sensorColumns}
           dataSource={sensors}
-          pagination={false}
-          scroll={{ x: 'max-content', y: 520 }}
+          scrollX={900}
+          maxHeight={520}
         />
 
         <Button type="dashed" style={{ width: '100%' }} onClick={() => onAddSensor(quickAddType ?? 'soil_moisture')}>

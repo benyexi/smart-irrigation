@@ -1,5 +1,5 @@
-import { Button, Table, Tag, Typography } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
+import { Button, Tag, Typography } from 'antd';
+import LiteTable, { type LiteTableColumn } from '../../../components/Tables/LiteTable';
 import type { PlantCategory, PlantKnowledgeRecord } from '../../../mock/knowledge';
 
 const { Paragraph, Text } = Typography;
@@ -13,7 +13,7 @@ interface KnowledgePlantTableProps {
 }
 
 const KnowledgePlantTable = ({ dataSource, onOpenDetail }: KnowledgePlantTableProps) => {
-  const columns: ColumnsType<PlantKnowledgeRecord> = [
+  const columns: LiteTableColumn<PlantKnowledgeRecord>[] = [
     {
       title: '植物名称',
       dataIndex: 'name',
@@ -27,7 +27,7 @@ const KnowledgePlantTable = ({ dataSource, onOpenDetail }: KnowledgePlantTablePr
       key: 'category',
       width: 100,
       sorter: (a, b) => a.category.localeCompare(b.category, 'zh-CN'),
-      render: (value: PlantCategory) => <Tag>{value}</Tag>,
+      render: (value) => <Tag>{value as PlantCategory}</Tag>,
     },
     {
       title: '适宜含水率下限(%)',
@@ -77,7 +77,7 @@ const KnowledgePlantTable = ({ dataSource, onOpenDetail }: KnowledgePlantTablePr
       key: 'stemShrinkAlert',
       width: 164,
       sorter: (a, b) => a.stemShrinkAlert - b.stemShrinkAlert,
-      render: (value: number) => value.toFixed(2),
+      render: (value) => Number(value ?? 0).toFixed(2),
     },
     {
       title: '灌溉方式建议',
@@ -110,15 +110,14 @@ const KnowledgePlantTable = ({ dataSource, onOpenDetail }: KnowledgePlantTablePr
 
   return (
     <>
-      <Table
+      <LiteTable
         className="knowledge-table"
         rowKey="id"
-        size="small"
-        tableLayout="fixed"
-        pagination={{ pageSize: 8, showSizeChanger: false }}
         columns={columns}
         dataSource={dataSource}
-        scroll={{ x: PLANT_TABLE_SCROLL_X }}
+        pageSize={8}
+        hideOnSinglePage
+        scrollX={PLANT_TABLE_SCROLL_X}
       />
       <Paragraph style={{ marginTop: 10, marginBottom: 0 }}>
         <Text type="secondary">{DATA_SOURCE_TEXT}</Text>

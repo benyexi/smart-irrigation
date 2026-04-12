@@ -1,5 +1,5 @@
-import { Button, Table, Typography } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
+import { Button, Typography } from 'antd';
+import LiteTable, { type LiteTableColumn } from '../../../components/Tables/LiteTable';
 import type { SoilKnowledgeRecord } from '../../../mock/knowledge';
 
 const { Paragraph, Text } = Typography;
@@ -13,7 +13,7 @@ interface KnowledgeSoilTableProps {
 }
 
 const KnowledgeSoilTable = ({ dataSource, onOpenDetail }: KnowledgeSoilTableProps) => {
-  const columns: ColumnsType<SoilKnowledgeRecord> = [
+  const columns: LiteTableColumn<SoilKnowledgeRecord>[] = [
     {
       title: '土壤类型',
       dataIndex: 'soilType',
@@ -48,7 +48,7 @@ const KnowledgeSoilTable = ({ dataSource, onOpenDetail }: KnowledgeSoilTableProp
       key: 'bulkDensity',
       width: 120,
       sorter: (a, b) => a.bulkDensity - b.bulkDensity,
-      render: (value: number) => value.toFixed(2),
+      render: (value) => Number(value ?? 0).toFixed(2),
     },
     {
       title: '饱和导水率(mm/h)',
@@ -79,15 +79,14 @@ const KnowledgeSoilTable = ({ dataSource, onOpenDetail }: KnowledgeSoilTableProp
 
   return (
     <>
-      <Table
+      <LiteTable
         className="knowledge-table"
         rowKey="id"
-        size="small"
-        tableLayout="fixed"
-        pagination={{ pageSize: 8, showSizeChanger: false }}
         columns={columns}
         dataSource={dataSource}
-        scroll={{ x: SOIL_TABLE_SCROLL_X }}
+        pageSize={8}
+        hideOnSinglePage
+        scrollX={SOIL_TABLE_SCROLL_X}
       />
       <Paragraph style={{ marginTop: 10, marginBottom: 0 }}>
         <Text type="secondary">{DATA_SOURCE_TEXT}</Text>

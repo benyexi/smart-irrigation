@@ -7,7 +7,7 @@
   border: 1px solid var(--border-base);
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.82);
-  overflow: hidden;
+  overflow: auto;
 }
 
 .lite-table {
@@ -24,6 +24,9 @@
   background: rgba(19, 102, 255, 0.05);
   border-bottom: 1px solid var(--border-base);
   white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .lite-table tbody td {
@@ -32,6 +35,22 @@
   color: var(--text-primary);
   border-bottom: 1px solid rgba(15, 23, 42, 0.06);
   vertical-align: middle;
+}
+
+.lite-table-sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.lite-table-header-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lite-table-sort-indicator {
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 .lite-table-cell-ellipsis {

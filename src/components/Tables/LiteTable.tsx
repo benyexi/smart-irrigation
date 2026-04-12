@@ -8,6 +8,7 @@ export interface LiteTableColumn<T> {
   width?: number | string;
   align?: 'left' | 'center' | 'right';
   ellipsis?: boolean;
+  sorter?: (a: T, b: T) => number;
   render?: (value: unknown, record: T, index: number) => React.ReactNode;
 }
 
@@ -20,8 +21,15 @@ interface LiteTableProps<T> {
   hideOnSinglePage?: boolean;
   className?: string;
   scrollX?: number | string;
+  maxHeight?: number | string;
   rowClassName?: (record: T, index: number) => string | undefined;
 }
+
+type SortState<T> = {
+  key: string;
+  order: 'ascend' | 'descend';
+  sorter: (a: T, b: T) => number;
+} | null;
 
 const resolveRowKey = <T,>(
   rowKey: LiteTableProps<T>['rowKey'],
@@ -38,36 +46,85 @@ const LiteTable = <T,>({
   hideOnSinglePage = false,
   className,
   scrollX,
+  maxHeight,
   rowClassName,
 }: LiteTableProps<T>) => {
   const [page, setPage] = useState(1);
+  const [sortState, setSortState] = useState<SortState<T>>(null);
+
+  const sortedData = useMemo(() => {
+    if (!sortState) {
+      return dataSource;
+    }
+
+    const next = [...dataSource].sort(sortState.sorter);
+    return sortState.order === 'ascend' ? next : next.reverse();
+  }, [dataSource, sortState]);
+
   const totalPages = pageSize ? Math.max(1, Math.ceil(dataSource.length / pageSize)) : 1;
   const currentPage = Math.min(page, totalPages);
 
   const rows = useMemo(() => {
     if (!pageSize) {
-      return dataSource;
+      return sortedData;
     }
 
     const start = (currentPage - 1) * pageSize;
-    return dataSource.slice(start, start + pageSize);
-  }, [currentPage, dataSource, pageSize]);
+    return sortedData.slice(start, start + pageSize);
+  }, [currentPage, pageSize, sortedData]);
+
+  const toggleSort = (column: LiteTableColumn<T>) => {
+    if (!column.sorter) {
+      return;
+    }
+
+    setPage(1);
+    setSortState((current) => {
+      if (!current || current.key !== column.key) {
+        return { key: column.key, order: 'ascend', sorter: column.sorter as (a: T, b: T) => number };
+      }
+      if (current.order === 'ascend') {
+        return { key: column.key, order: 'descend', sorter: column.sorter as (a: T, b: T) => number };
+      }
+      return null;
+    });
+  };
 
   return (
     <div className={['lite-table-shell', className].filter(Boolean).join(' ')}>
-      <div className="lite-table-scroll" style={scrollX ? { overflowX: 'auto' } : undefined}>
+      <div
+        className="lite-table-scroll"
+        style={{
+          overflowX: scrollX ? 'auto' : undefined,
+          overflowY: maxHeight ? 'auto' : undefined,
+          maxHeight,
+        }}
+      >
         <table className="lite-table" style={scrollX ? { minWidth: scrollX } : undefined}>
           <thead>
             <tr>
               {columns.map((column) => (
                 <th
                   key={column.key}
+                  className={column.sorter ? 'lite-table-sortable' : undefined}
                   style={{
                     width: column.width,
                     textAlign: column.align ?? 'left',
                   }}
+                  onClick={() => toggleSort(column)}
                 >
-                  {column.title}
+                  <span className="lite-table-header-content">
+                    <span>{column.title}</span>
+                    {column.sorter ? (
+                      <span className="lite-table-sort-indicator" aria-hidden="true">
+                        {sortState?.key === column.key
+                          ? sortState.order === 'ascend'
+                            ? '▲'
+                            : '▼'
+                          : '↕'}
+                      </span>
+                    ) : null}
+                  </span>
                 </th>
               ))}
             </tr>

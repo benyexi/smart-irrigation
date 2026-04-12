@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Input, InputNumber, Modal, Select, Space, Steps, message } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
+import type { LiteTableColumn } from '../../components/Tables/LiteTable';
 import { plantRecommendations } from '../../mock/knowledge';
 import { useSiteStore } from '../../stores/siteStore';
 import type { AlarmRule, ModeParams, Pipeline, Sensor, Site } from '../../types/site';
@@ -437,8 +437,9 @@ const SiteModal: React.FC<SiteModalProps> = ({
     updateModeParams({ weights: next });
   };
 
-  const sensorColumns: ColumnsType<Sensor> = [
+  const sensorColumns: LiteTableColumn<Sensor>[] = [
     {
+      key: 'type',
       title: '类型',
       dataIndex: 'type',
       width: 140,
@@ -452,6 +453,7 @@ const SiteModal: React.FC<SiteModalProps> = ({
       ),
     },
     {
+      key: 'deviceId',
       title: '设备ID',
       dataIndex: 'deviceId',
       width: 100,
@@ -464,6 +466,7 @@ const SiteModal: React.FC<SiteModalProps> = ({
       ),
     },
     {
+      key: 'location',
       title: '安装位置',
       dataIndex: 'location',
       width: 150,
@@ -476,6 +479,7 @@ const SiteModal: React.FC<SiteModalProps> = ({
       ),
     },
     {
+      key: 'topic',
       title: 'Topic',
       dataIndex: 'topic',
       width: 220,
@@ -493,6 +497,7 @@ const SiteModal: React.FC<SiteModalProps> = ({
       ),
     },
     {
+      key: 'x',
       title: 'X',
       dataIndex: 'x',
       width: 72,
@@ -511,6 +516,7 @@ const SiteModal: React.FC<SiteModalProps> = ({
       ),
     },
     {
+      key: 'y',
       title: 'Y',
       dataIndex: 'y',
       width: 72,

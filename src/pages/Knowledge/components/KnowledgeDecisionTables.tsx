@@ -1,5 +1,5 @@
-import { Space, Table, Tag, Typography } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
+import { Space, Tag, Typography } from 'antd';
+import LiteTable, { type LiteTableColumn } from '../../../components/Tables/LiteTable';
 import {
   type AlarmThresholdReferenceRecord,
   type DecisionModeReferenceRecord,
@@ -20,7 +20,7 @@ const KnowledgeDecisionTables = ({
   decisionData,
   alarmData,
 }: KnowledgeDecisionTablesProps) => {
-  const decisionModeColumns: ColumnsType<DecisionModeReferenceRecord> = [
+  const decisionModeColumns: LiteTableColumn<DecisionModeReferenceRecord>[] = [
     {
       title: '决策模式',
       dataIndex: 'mode',
@@ -65,7 +65,7 @@ const KnowledgeDecisionTables = ({
     },
   ];
 
-  const alarmColumns: ColumnsType<AlarmThresholdReferenceRecord> = [
+  const alarmColumns: LiteTableColumn<AlarmThresholdReferenceRecord>[] = [
     {
       title: '报警类型',
       dataIndex: 'alarmType',
@@ -86,8 +86,8 @@ const KnowledgeDecisionTables = ({
       key: 'severity',
       width: 110,
       sorter: (a, b) => a.severity.localeCompare(b.severity, 'zh-CN'),
-      render: (value: string) => (
-        <Tag color={value === '高' ? 'red' : value === '中' ? 'orange' : 'blue'}>{value}</Tag>
+      render: (value) => (
+        <Tag color={value === '高' ? 'red' : value === '中' ? 'orange' : 'blue'}>{String(value ?? '--')}</Tag>
       ),
     },
     {
@@ -110,15 +110,12 @@ const KnowledgeDecisionTables = ({
     <Space direction="vertical" size={16} style={{ width: '100%' }}>
       <div>
         <Title level={5} style={{ marginBottom: 8 }}>各决策模式适用场景对比</Title>
-        <Table
+        <LiteTable
           className="knowledge-table"
           rowKey="id"
-          size="small"
-          tableLayout="fixed"
-          pagination={false}
           columns={decisionModeColumns}
           dataSource={decisionData}
-          scroll={{ x: DECISION_TABLE_SCROLL_X }}
+          scrollX={DECISION_TABLE_SCROLL_X}
         />
         <Paragraph style={{ marginTop: 10, marginBottom: 0 }}>
           <Text type="secondary">{DATA_SOURCE_TEXT}</Text>
@@ -127,15 +124,12 @@ const KnowledgeDecisionTables = ({
 
       <div>
         <Title level={5} style={{ marginBottom: 8 }}>常见报警阈值参考</Title>
-        <Table
+        <LiteTable
           className="knowledge-table"
           rowKey="id"
-          size="small"
-          tableLayout="fixed"
-          pagination={false}
           columns={alarmColumns}
           dataSource={alarmData}
-          scroll={{ x: ALARM_TABLE_SCROLL_X }}
+          scrollX={ALARM_TABLE_SCROLL_X}
         />
         <Paragraph style={{ marginTop: 10, marginBottom: 0 }}>
           <Text type="secondary">{DATA_SOURCE_TEXT}</Text>
