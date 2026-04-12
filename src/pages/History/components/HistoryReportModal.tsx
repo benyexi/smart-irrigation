@@ -1,6 +1,5 @@
-import { Button, DatePicker, Form, Modal, Select } from 'antd';
-
-const { RangePicker } = DatePicker;
+import { Button, Form, Modal, Select } from 'antd';
+import LiteDateRange from '../../../components/Inputs/LiteDateRange';
 
 interface HistoryReportModalProps {
   open: boolean;
@@ -47,7 +46,7 @@ const HistoryReportModal = ({
         <Select defaultValue="site001" options={siteOptions} />
       </Form.Item>
       <Form.Item label="时间范围">
-        <RangePicker style={{ width: '100%' }} />
+        <LiteDateRange />
       </Form.Item>
     </Form>
   </Modal>

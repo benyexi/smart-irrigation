@@ -1,12 +1,12 @@
 import React, { Suspense, lazy, useMemo, useState } from 'react';
-import { Row, Col, Card, Select, Button, Typography, DatePicker, Space, Skeleton, message } from 'antd';
+import { Row, Col, Card, Select, Button, Typography, Space, Skeleton, message } from 'antd';
 import { DownloadOutlined, FileTextOutlined } from '@ant-design/icons';
 import DeferredEChart from '../../components/ECharts/DeferredEChart';
+import LiteDateRange from '../../components/Inputs/LiteDateRange';
 import type { ColumnsType } from 'antd/es/table';
 import { mockHistoryData, mockHistoryTimestamps, metricLabels, mockSites } from '../../mock';
 
 const { Title } = Typography;
-const { RangePicker } = DatePicker;
 const HistoryTableCard = lazy(() => import('./components/HistoryTableCard'));
 const HistoryReportModal = lazy(() => import('./components/HistoryReportModal'));
 
@@ -93,7 +93,7 @@ ${tableData.slice(0,20).map(r=>`<tr><td>${r.time}</td>${selectedMetrics.map(m=>`
 
       <Card style={{ marginBottom: 16 }}>
         <Row gutter={12} align="middle">
-          <Col><RangePicker style={{ width: 260 }} /></Col>
+          <Col><LiteDateRange compact width={260} /></Col>
           <Col flex="auto">
             <Select mode="multiple" value={selectedMetrics} onChange={setSelectedMetrics} style={{ width: '100%' }}
               options={metrics.map(m => ({ value: m, label: metricLabels[m] ?? m }))} maxTagCount={3} />

@@ -1,14 +1,14 @@
 // Alerts page — unresolved / resolved tabs, mark as handled
 import React, { useState } from 'react';
 import {
-  Card, Table, Tag, Button, Tabs, DatePicker, Row, Col, Typography, message, Space,
+  Card, Table, Tag, Button, Tabs, Row, Col, Typography, message, Space,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { CheckOutlined } from '@ant-design/icons';
+import LiteDateRange from '../../components/Inputs/LiteDateRange';
 import { mockAlerts, type Alert } from '../../mock';
 
 const { Title } = Typography;
-const { RangePicker } = DatePicker;
 
 const levelColor: Record<string, string> = {
   error: 'red',
@@ -99,7 +99,7 @@ const Alerts: React.FC = () => {
         {/* Filter bar */}
         <Row gutter={12} style={{ marginBottom: 16 }}>
           <Col>
-            <RangePicker style={{ width: 260 }} />
+            <LiteDateRange compact width={260} />
           </Col>
           <Col>
             <Space>
