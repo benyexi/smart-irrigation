@@ -20,7 +20,7 @@ import {
   ClusterOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
-import { getCurrentSiteId } from '../../utils/siteStorage';
+import { useSiteStore, useSyncSiteStore } from '../../stores/siteStore';
 import './IoT.css';
 
 const { Title, Paragraph, Text } = Typography;
@@ -250,10 +250,11 @@ const sensorTypeRows = [
 ];
 
 const IoT: React.FC = () => {
-  const currentSiteId = getCurrentSiteId();
+  useSyncSiteStore();
+  const currentSiteId = useSiteStore((state) => state.currentSiteId);
 
   const handleCopyCurrentSiteId = async () => {
-    const siteId = getCurrentSiteId();
+    const siteId = currentSiteId;
     if (!siteId) {
       message.warning('当前没有可复制的站点 ID');
       return;

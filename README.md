@@ -115,6 +115,7 @@
 - `Monitor` 已拆为“页面运行时编排器 + 视图子组件”结构：状态栏、实时卡片、数据模拟器、控制面板、指令历史、日志侧栏分别独立，页面层只保留 MQTT 生命周期、命令链路和定时器控制。
 - `Monitor` 进一步收口为“站点装配层 + `useMonitorRuntime` 运行时 Hook + 视图子组件”结构；命令状态机、ack 等待器、模拟器定时器和 MQTT 初始化逻辑已从页面本体下沉。
 - `Dashboard` 与 `Monitor` 已共享 `src/utils/mqttTelemetry.ts`，统一了 MQTT payload 解析、`deviceId` 提取、数值读取与传感器映射，避免两边各维护一套协议适配逻辑。
+- `Dashboard / Monitor / Map / Sites / IoT` 已统一接入 `src/stores/siteStore.ts`，当前站点与站点列表不再各页面分别从 `localStorage` 读一遍；站点切换、保存、删除会自动联动。
 - 知识库表格已取消固定右列方案，改为稳定的横向滚动与省略显示，避免列叠压。
 
 ---
@@ -167,6 +168,7 @@ npm run deploy
 - `src/pages/`：业务页面
 - `src/stores/monitorStore.ts`：实时监控 Zustand store
 - `src/stores/monitorStore.types.ts`：监控页运行时类型与默认值
+- `src/stores/siteStore.ts`：站点列表与当前站点的统一运行时 store
 - `src/pages/Monitor/components/`：监控页各独立面板组件
 - `src/pages/Monitor/monitorViewShared.ts`：监控页视图层格式化与共享常量
 - `src/pages/Monitor/useMonitorRuntime.ts`：监控页运行时 Hook（MQTT/ack/模拟器/指令链路）
@@ -176,6 +178,7 @@ npm run deploy
 - `src/utils/mqttTelemetry.ts`：Dashboard/Monitor 共用的 MQTT 遥测解析与设备映射工具
 - `src/utils/mqttClient.ts`：MQTT 客户端封装
 - `src/utils/siteStorage.ts`：站点存储（localStorage）
+- `src/utils/siteStorage.ts`：站点持久化与跨页面同步事件
 - `src/types/site.ts`：站点/设备核心类型
 - `src/mock/`：当前演示数据源
 

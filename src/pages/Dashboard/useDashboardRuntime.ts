@@ -7,21 +7,19 @@ import {
   getMqttPacketDeviceId,
   getTelemetryNumericValue,
 } from '../../utils/mqttTelemetry';
-import {
-  getCurrentSiteId,
-  getSites,
-  setCurrentSiteId,
-} from '../../utils/siteStorage';
 import { useMqttStatus } from '../../hooks/useMqttStatus';
 import { useMqttSubscription } from '../../hooks/useMqttSubscription';
+import { useSiteStore, useSyncSiteStore } from '../../stores/siteStore';
 import { liveMetricSensorTypes } from './dashboardShared';
 
 export const useDashboardRuntime = () => {
-  const [sites, setSites] = useState<Site[]>(() => getSites());
-  const [selectedSite, setSelectedSite] = useState<string>(() => getCurrentSiteId());
   const [plantPhysiology, setPlantPhysiology] = useState(
     () => mockDashboard.plantPhysiology,
   );
+  useSyncSiteStore();
+  const sites = useSiteStore((state) => state.sites);
+  const selectedSite = useSiteStore((state) => state.currentSiteId);
+  const setCurrentSite = useSiteStore((state) => state.setCurrentSite);
   const mqttStatus = useMqttStatus();
 
   const site = useMemo(
@@ -38,17 +36,14 @@ export const useDashboardRuntime = () => {
   }, [site]);
 
   const handleSiteChange = useCallback((siteId: string) => {
-    setSelectedSite(siteId);
-    setCurrentSiteId(siteId);
+    setCurrentSite(siteId);
     setPlantPhysiology(mockDashboard.plantPhysiology);
-  }, []);
+  }, [setCurrentSite]);
 
   const handleSiteSaved = useCallback((savedSite: Site) => {
-    setSites(getSites());
-    setSelectedSite(savedSite.id);
-    setCurrentSiteId(savedSite.id);
+    setCurrentSite(savedSite.id);
     setPlantPhysiology(mockDashboard.plantPhysiology);
-  }, []);
+  }, [setCurrentSite]);
 
   const handleTelemetry = useCallback(
     (message: MqttMessage) => {

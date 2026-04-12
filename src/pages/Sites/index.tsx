@@ -3,7 +3,7 @@ import { AppstoreOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icon
 import { Button, Card, Col, Descriptions, Popconfirm, Row, Space, Tag, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import type { Site } from '../../types/site';
-import { deleteSite, getSites, setCurrentSiteId } from '../../utils/siteStorage';
+import { useSiteStore, useSyncSiteStore } from '../../stores/siteStore';
 import SiteModal from './SiteModal';
 import './Sites.css';
 
@@ -37,7 +37,10 @@ const decisionText: Record<Exclude<Site['decisionMode'], null>, string> = {
 
 const SitesPage: React.FC = () => {
   const navigate = useNavigate();
-  const [sites, setSites] = useState<Site[]>(() => getSites());
+  useSyncSiteStore();
+  const sites = useSiteStore((state) => state.sites);
+  const removeSite = useSiteStore((state) => state.deleteSite);
+  const setCurrentSite = useSiteStore((state) => state.setCurrentSite);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingSite, setEditingSite] = useState<Site | null>(null);
 
@@ -53,10 +56,6 @@ const SitesPage: React.FC = () => {
     };
   }, [sites]);
 
-  const refreshSites = () => {
-    setSites(getSites());
-  };
-
   const openCreateModal = () => {
     setEditingSite(null);
     setModalOpen(true);
@@ -68,12 +67,11 @@ const SitesPage: React.FC = () => {
   };
 
   const onDeleteSite = (id: string) => {
-    deleteSite(id);
-    refreshSites();
+    removeSite(id);
   };
 
   const enterDashboard = (site: Site) => {
-    setCurrentSiteId(site.id);
+    setCurrentSite(site.id);
     navigate('/dashboard');
   };
 
@@ -180,7 +178,6 @@ const SitesPage: React.FC = () => {
         initialSite={editingSite}
         onCancel={() => setModalOpen(false)}
         onSaved={() => {
-          refreshSites();
           setModalOpen(false);
         }}
       />

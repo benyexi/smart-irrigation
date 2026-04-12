@@ -2,6 +2,7 @@ import type { Site } from '../types/site';
 
 const KEY = 'siz_sites';
 const CURRENT_KEY = 'siz_current_site';
+const SITE_STORAGE_EVENT = 'siz-site-storage-change';
 
 const DEMO_SITES: Site[] = [
   {
@@ -92,23 +93,74 @@ export function getSites(): Site[] {
   return JSON.parse(raw);
 }
 
+const emitSiteStorageChange = () => {
+  window.dispatchEvent(new CustomEvent(SITE_STORAGE_EVENT));
+};
+
+const resolveCurrentSiteId = (sites: Site[]): string => {
+  const storedId = localStorage.getItem(CURRENT_KEY) || '';
+  if (storedId && sites.some((site) => site.id === storedId)) {
+    return storedId;
+  }
+  return sites[0]?.id ?? '';
+};
+
+const persistCurrentSiteId = (id: string) => {
+  if (id) {
+    localStorage.setItem(CURRENT_KEY, id);
+    return;
+  }
+  localStorage.removeItem(CURRENT_KEY);
+};
+
+export function getSiteStorageSnapshot(): {
+  sites: Site[];
+  currentSiteId: string;
+} {
+  const sites = getSites();
+  const currentSiteId = resolveCurrentSiteId(sites);
+  persistCurrentSiteId(currentSiteId);
+  return { sites, currentSiteId };
+}
+
+export function subscribeSiteStorage(listener: () => void): () => void {
+  const handleStorage = () => listener();
+
+  window.addEventListener(SITE_STORAGE_EVENT, handleStorage);
+  window.addEventListener('storage', handleStorage);
+  window.addEventListener('focus', handleStorage);
+
+  return () => {
+    window.removeEventListener(SITE_STORAGE_EVENT, handleStorage);
+    window.removeEventListener('storage', handleStorage);
+    window.removeEventListener('focus', handleStorage);
+  };
+}
+
 export function saveSite(site: Site): void {
   const sites = getSites();
   const idx = sites.findIndex(s => s.id === site.id);
   if (idx >= 0) sites[idx] = site;
   else sites.push(site);
   localStorage.setItem(KEY, JSON.stringify(sites));
+  const currentSiteId = resolveCurrentSiteId(sites);
+  persistCurrentSiteId(currentSiteId || site.id);
+  emitSiteStorageChange();
 }
 
 export function deleteSite(id: string): void {
   const sites = getSites().filter(s => s.id !== id);
   localStorage.setItem(KEY, JSON.stringify(sites));
+  persistCurrentSiteId(resolveCurrentSiteId(sites));
+  emitSiteStorageChange();
 }
 
 export function getCurrentSiteId(): string {
-  return localStorage.getItem(CURRENT_KEY) || 'site-001';
+  const { currentSiteId } = getSiteStorageSnapshot();
+  return currentSiteId || 'site-001';
 }
 
 export function setCurrentSiteId(id: string): void {
-  localStorage.setItem(CURRENT_KEY, id);
+  persistCurrentSiteId(id);
+  emitSiteStorageChange();
 }

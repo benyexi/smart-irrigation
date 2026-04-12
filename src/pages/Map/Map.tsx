@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Col, Row, Tag, Typography } from 'antd';
 import type { Site } from '../../types/site';
-import { getSites } from '../../utils/siteStorage';
+import { useSiteStore, useSyncSiteStore } from '../../stores/siteStore';
 
 const { Text } = Typography;
 
@@ -16,27 +16,10 @@ type CoordSite = Site & { lat: number; lng: number };
 const hasCoord = (site: Site): site is CoordSite => Number.isFinite(site.lat) && Number.isFinite(site.lng);
 
 const MapPage: React.FC = () => {
-  const [sites, setSites] = useState<Site[]>(() => getSites());
-  const [selectedSiteId, setSelectedSiteId] = useState<string>('');
-
-  useEffect(() => {
-    const sync = () => {
-      const nextSites = getSites();
-      setSites(nextSites);
-      if (selectedSiteId && nextSites.some((site) => site.id === selectedSiteId)) {
-        return;
-      }
-      setSelectedSiteId(nextSites[0]?.id ?? '');
-    };
-
-    sync();
-    window.addEventListener('storage', sync);
-    window.addEventListener('focus', sync);
-    return () => {
-      window.removeEventListener('storage', sync);
-      window.removeEventListener('focus', sync);
-    };
-  }, [selectedSiteId]);
+  useSyncSiteStore();
+  const sites = useSiteStore((state) => state.sites);
+  const selectedSiteId = useSiteStore((state) => state.currentSiteId);
+  const setCurrentSite = useSiteStore((state) => state.setCurrentSite);
 
   const selectedSite = sites.find((site) => site.id === selectedSiteId) ?? sites[0] ?? null;
 
@@ -143,7 +126,7 @@ const MapPage: React.FC = () => {
             return (
               <div
                 key={site.id}
-                onClick={() => setSelectedSiteId(site.id)}
+                onClick={() => setCurrentSite(site.id)}
                 style={{
                   cursor: 'pointer',
                   padding: '12px 16px',
@@ -174,7 +157,7 @@ const MapPage: React.FC = () => {
               const cfg = statusConfig[site.status];
               const selected = selectedSite?.id === site.id;
               return (
-                <g key={site.id} onClick={() => setSelectedSiteId(site.id)} style={{ cursor: 'pointer' }}>
+                <g key={site.id} onClick={() => setCurrentSite(site.id)} style={{ cursor: 'pointer' }}>
                   <circle cx={p.x} cy={p.y} r={selected ? 18 : 14} fill={cfg.color} opacity={selected ? 0.2 : 0.12} />
                   <circle cx={p.x} cy={p.y} r={selected ? 8 : 6} fill={cfg.color} opacity={0.95} />
                   <text x={p.x + 12} y={p.y + 4} fill="#8892a4" fontSize="11">{site.name.slice(0, 8)}</text>

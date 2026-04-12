@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { message } from 'antd';
 import type { Site } from '../../types/site';
-import { getCurrentSiteId, getSites } from '../../utils/siteStorage';
 import { sensorBaseMap, sensorRangeMap } from '../../stores/monitorStore';
+import { useSiteStore, useSyncSiteStore } from '../../stores/siteStore';
 import MonitorCommandHistorySection from './components/MonitorCommandHistorySection';
 import MonitorControlSection from './components/MonitorControlSection';
 import MonitorLogPanel from './components/MonitorLogPanel';
@@ -14,8 +14,9 @@ import { useMonitorRuntime } from './useMonitorRuntime';
 import './Monitor.css';
 
 const Monitor: React.FC = () => {
-  const currentSiteId = useMemo(() => getCurrentSiteId(), []);
-  const sites = useMemo(() => getSites(), []);
+  useSyncSiteStore();
+  const currentSiteId = useSiteStore((state) => state.currentSiteId);
+  const sites = useSiteStore((state) => state.sites);
   const currentSite = useMemo<Site | null>(
     () => sites.find((site) => site.id === currentSiteId) ?? sites[0] ?? null,
     [currentSiteId, sites],
