@@ -112,6 +112,7 @@
 - MQTT 订阅与状态监听已封装为 React Hook，`Dashboard` 与 `Monitor` 不再手动维护订阅清理逻辑。
 - `Monitor` 已引入 Zustand 做状态收口，避免日志、设备状态、实时卡片和模拟器配置全部堆在页面局部 `useState` 中。
 - `Monitor` 已拆为“页面运行时编排器 + 视图子组件”结构：状态栏、实时卡片、数据模拟器、控制面板、指令历史、日志侧栏分别独立，页面层只保留 MQTT 生命周期、命令链路和定时器控制。
+- `Monitor` 进一步收口为“站点装配层 + `useMonitorRuntime` 运行时 Hook + 视图子组件”结构；命令状态机、ack 等待器、模拟器定时器和 MQTT 初始化逻辑已从页面本体下沉。
 - 知识库表格已取消固定右列方案，改为稳定的横向滚动与省略显示，避免列叠压。
 
 ---
@@ -166,6 +167,8 @@ npm run deploy
 - `src/stores/monitorStore.types.ts`：监控页运行时类型与默认值
 - `src/pages/Monitor/components/`：监控页各独立面板组件
 - `src/pages/Monitor/monitorViewShared.ts`：监控页视图层格式化与共享常量
+- `src/pages/Monitor/useMonitorRuntime.ts`：监控页运行时 Hook（MQTT/ack/模拟器/指令链路）
+- `src/pages/Monitor/monitorRuntimeShared.ts`：监控页运行时共享方法与 Topic 生成
 - `src/utils/mqttClient.ts`：MQTT 客户端封装
 - `src/utils/siteStorage.ts`：站点存储（localStorage）
 - `src/types/site.ts`：站点/设备核心类型
