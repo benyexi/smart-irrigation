@@ -1,1 +1,0 @@
-import{t as e}from"./vendor-react-DyfnwtaQ.js";import{t}from"./table-DbJuwMyq.js";import{t as n}from"./card-C0TsoBLA.js";var r=e(),i=({columns:e,dataSource:i})=>(0,r.jsx)(n,{children:(0,r.jsx)(t,{columns:e,dataSource:i,size:`small`,pagination:{pageSize:20},scroll:{x:800}})});export{i as default};
