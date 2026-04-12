@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
   Button,
   Card,
@@ -33,73 +33,28 @@ import { useMqttSubscription } from '../../hooks/useMqttSubscription';
 import {
   connectMqtt,
   disconnectMqtt,
-  getMqttBrokerUrl,
-  getMqttStatus,
   publishMqtt,
   type MqttMessage,
-  type MqttStatus,
 } from '../../utils/mqttClient';
 import { getCurrentSiteId, getSites } from '../../utils/siteStorage';
+import {
+  DEFAULT_BROKER,
+  buildInitialDeviceCommandState,
+  buildInitialSensorRuntime,
+  sensorBaseMap,
+  sensorRangeMap,
+  sensorUnitMap,
+  MAX_POINTS,
+  type CommandEntry,
+  type CommandStatus,
+  type SelectedHistoryStatus,
+  useMonitorStore,
+} from '../../stores/monitorStore';
 import './Monitor.css';
 
 const { Title, Text } = Typography;
 
-type CommandStatus = 'pending' | 'ack' | 'timeout' | 'failed';
-type MqttConnectionState = MqttStatus | 'connecting';
-
-type MqttStatusSnapshot = {
-  state: MqttConnectionState;
-  broker: string;
-  connectedAt: number | null;
-};
-
-type SensorRuntime = {
-  latestValue: number | string | null;
-  unit: string;
-  lastUpdatedAt: number | null;
-  history: number[];
-  flashing: boolean;
-};
-
-type LogEntry = {
-  id: string;
-  timestamp: number;
-  topic: string;
-  payload: string;
-};
-
-type CommandEntry = {
-  id: string;
-  msgId: string;
-  timestamp: number;
-  deviceId: string;
-  command: string;
-  status: CommandStatus;
-  latencyMs?: number;
-};
-
-type DeviceCommandState = {
-  status: CommandStatus | 'idle';
-  lastAction: string;
-  lastCommandAt: number | null;
-  runtimeSince: number | null;
-  frequencyHz?: number;
-  valueLabel?: string;
-};
-
-type SimulatorState = {
-  sensorId?: string;
-  baseValue: number;
-  rangeValue: number;
-  intervalMs: number;
-  running: boolean;
-};
-
-const DEFAULT_BROKER = 'wss://broker.emqx.io:8084/mqtt';
 const FIVE_MINUTES = 5 * 60 * 1000;
-const MAX_LOGS = 100;
-const MAX_HISTORY = 50;
-const MAX_POINTS = 20;
 const SPARKLINE_HEIGHT = 60;
 
 const sensorTypeLabelMap: Record<Sensor['type'], string> = {
@@ -124,42 +79,6 @@ const sensorColorMap: Record<Sensor['type'], string> = {
   flow_meter: '#1366ff',
   valve: '#cf4453',
   pump: '#c7962f',
-};
-
-const sensorUnitMap: Partial<Record<Sensor['type'], string>> = {
-  soil_moisture: '%',
-  soil_potential: 'kPa',
-  weather_station: '°C',
-  sapflow: 'g/h',
-  stem_diameter: 'mm',
-  leaf_turgor: 'MPa',
-  flow_meter: 'm³/h',
-  valve: '',
-  pump: 'Hz',
-};
-
-const sensorBaseMap: Record<Sensor['type'], number> = {
-  soil_moisture: 26,
-  soil_potential: -42,
-  weather_station: 23,
-  sapflow: 135,
-  stem_diameter: 0.32,
-  leaf_turgor: 0.68,
-  flow_meter: 3.4,
-  valve: 1,
-  pump: 38,
-};
-
-const sensorRangeMap: Record<Sensor['type'], number> = {
-  soil_moisture: 4,
-  soil_potential: 8,
-  weather_station: 3,
-  sapflow: 20,
-  stem_diameter: 0.08,
-  leaf_turgor: 0.12,
-  flow_meter: 1.2,
-  valve: 1,
-  pump: 6,
 };
 
 const getTimestamp = () => Date.now();
@@ -261,37 +180,6 @@ const getSensorTopic = (siteId: string, sensor: Sensor) => `siz/v1/${siteId}/sen
 const getAckTopic = (siteId: string, sensor: Sensor) => `siz/v1/${siteId}/control/${resolveDeviceId(sensor)}/ack`;
 const getCmdTopic = (siteId: string, sensor: Sensor) => `siz/v1/${siteId}/control/${resolveDeviceId(sensor)}/cmd`;
 
-const seedHistory = (sensor: Sensor) => {
-  const base = sensorBaseMap[sensor.type];
-  const range = sensorRangeMap[sensor.type];
-  return Array.from({ length: MAX_POINTS }, (_, index) => {
-    if (sensor.type === 'valve') {
-      return index > MAX_POINTS - 6 ? 1 : 0;
-    }
-    if (sensor.type === 'pump') {
-      return 38;
-    }
-    return Number((base + Math.sin(index / 3) * range * 0.35).toFixed(2));
-  });
-};
-
-const buildInitialSensorState = (sensor: Sensor): SensorRuntime => ({
-  latestValue: sensor.type === 'valve' ? '关闭' : sensor.type === 'pump' ? 38 : sensorBaseMap[sensor.type],
-  unit: sensorUnitMap[sensor.type] ?? '',
-  lastUpdatedAt: null,
-  history: seedHistory(sensor),
-  flashing: false,
-});
-
-const buildInitialDeviceState = (sensor: Sensor): DeviceCommandState => ({
-  status: 'idle',
-  lastAction: '尚未下发指令',
-  lastCommandAt: null,
-  runtimeSince: null,
-  frequencyHz: sensor.type === 'pump' ? 38 : undefined,
-  valueLabel: sensor.type === 'valve' ? '关闭' : '待机',
-});
-
 const sensorSortWeight = (type: Sensor['type']) => {
   if (type === 'valve') return 9;
   if (type === 'pump') return 10;
@@ -314,79 +202,38 @@ const Monitor: React.FC = () => {
     [sensors],
   );
 
-  const [broker, setBroker] = useState(() => getMqttBrokerUrl() || DEFAULT_BROKER);
-  const [mqttStatus, setMqttStatus] = useState<MqttStatusSnapshot>({
-    state: getMqttStatus(),
-    broker: getMqttBrokerUrl() || DEFAULT_BROKER,
-    connectedAt: getMqttStatus() === 'connected' ? getTimestamp() : null,
-  });
-  const [nowTick, setNowTick] = useState(0);
-  const [messageCount, setMessageCount] = useState(0);
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [logsPaused, setLogsPaused] = useState(false);
-  const [sensorStateMap, setSensorStateMap] = useState<Record<string, SensorRuntime>>(() => {
-    const next: Record<string, SensorRuntime> = {};
-    sensors.forEach((sensor) => {
-      next[sensor.id] = buildInitialSensorState(sensor);
-    });
-    return next;
-  });
-  const [simulator, setSimulator] = useState<SimulatorState>({
-    sensorId: undefined,
-    baseValue: 26,
-    rangeValue: 3,
-    intervalMs: 2000,
-    running: false,
-  });
-  const [selectedHistoryStatus, setSelectedHistoryStatus] = useState<'all' | CommandStatus>('all');
-  const [commandHistory, setCommandHistory] = useState<CommandEntry[]>([]);
-  const [deviceCommandState, setDeviceCommandState] = useState<Record<string, DeviceCommandState>>(() => {
-    const next: Record<string, DeviceCommandState> = {};
-    controlSensors.forEach((sensor) => {
-      next[sensor.id] = buildInitialDeviceState(sensor);
-    });
-    return next;
-  });
+  const broker = useMonitorStore((state) => state.broker);
+  const mqttStatus = useMonitorStore((state) => state.mqttStatus);
+  const messageCount = useMonitorStore((state) => state.messageCount);
+  const logs = useMonitorStore((state) => state.logs);
+  const logsPaused = useMonitorStore((state) => state.logsPaused);
+  const sensorStateMap = useMonitorStore((state) => state.sensorStateMap);
+  const simulator = useMonitorStore((state) => state.simulator);
+  const commandHistory = useMonitorStore((state) => state.commandHistory);
+  const deviceCommandState = useMonitorStore((state) => state.deviceCommandState);
+  const selectedHistoryStatus = useMonitorStore((state) => state.selectedHistoryStatus);
+  const resetRuntime = useMonitorStore((state) => state.resetRuntime);
+  const setBroker = useMonitorStore((state) => state.setBroker);
+  const setMqttStatus = useMonitorStore((state) => state.setMqttStatus);
+  const appendLog = useMonitorStore((state) => state.appendLog);
+  const clearLogs = useMonitorStore((state) => state.clearLogs);
+  const setLogsPaused = useMonitorStore((state) => state.setLogsPaused);
+  const upsertSensorRuntime = useMonitorStore((state) => state.upsertSensorRuntime);
+  const upsertDeviceCommandState = useMonitorStore((state) => state.upsertDeviceCommandState);
+  const updateSimulator = useMonitorStore((state) => state.updateSimulator);
+  const appendCommandHistory = useMonitorStore((state) => state.appendCommandHistory);
+  const setSelectedHistoryStatus = useMonitorStore((state) => state.setSelectedHistoryStatus);
 
   const ackWaitersRef = useRef(
     new Map<string, { startedAt: number; deviceId: string; command: string; sensorId: string; timeoutId: number }>(),
   );
   const timerOpenMinutesRef = useRef<Record<string, number>>({});
   const simulatorTimerRef = useRef<number | null>(null);
-  const logsPausedRef = useRef(false);
-  const brokerRef = useRef(getMqttBrokerUrl() || DEFAULT_BROKER);
+  const [nowTick, setNowTick] = React.useState(0);
 
-  const updateMqttStatus = (nextState: MqttConnectionState, brokerUrl: string) => {
-    setMqttStatus((previous) => ({
-      state: nextState,
-      broker: brokerUrl,
-      connectedAt: nextState === 'connected'
-        ? previous.connectedAt ?? getTimestamp()
-        : nextState === 'connecting'
-          ? previous.connectedAt
-          : null,
-    }));
-  };
-
-  const appendCommandHistory = (entry: Omit<CommandEntry, 'id'>) => {
-    const nextEntry: CommandEntry = { id: createId('cmd-history'), ...entry };
-    setCommandHistory((previous) => [nextEntry, ...previous].slice(0, MAX_HISTORY));
-  };
-
-  const appendLog = (packet: MqttMessage) => {
-    setMessageCount((count) => count + 1);
-    if (logsPausedRef.current) {
-      return;
-    }
-
-    const entry: LogEntry = {
-      id: createId('log'),
-      timestamp: packet.timestamp,
-      topic: packet.topic,
-      payload: packet.payloadText,
-    };
-    setLogs((previous) => [entry, ...previous].slice(0, MAX_LOGS));
-  };
+  useEffect(() => {
+    resetRuntime(sensors, controlSensors);
+  }, [controlSensors, resetRuntime, sensors]);
 
   const handleSensorMessage = (packet: MqttMessage) => {
     appendLog(packet);
@@ -412,20 +259,17 @@ const Monitor: React.FC = () => {
     const unit = typeof body.unit === 'string' ? body.unit : sensorUnitMap[sensor.type] ?? '';
     const timestamp = typeof body.ts === 'number' ? body.ts : packet.timestamp;
 
-    setSensorStateMap((previous) => {
-      const base = previous[sensor.id] ?? buildInitialSensorState(sensor);
+    upsertSensorRuntime(sensor, (previous) => {
       const nextHistoryValue = typeof resolvedValue === 'number'
         ? resolvedValue
-        : base.history[base.history.length - 1] ?? sensorBaseMap[sensor.type];
+        : previous.history[previous.history.length - 1] ?? sensorBaseMap[sensor.type];
       return {
         ...previous,
-        [sensor.id]: {
-          latestValue: resolvedValue,
-          unit,
-          lastUpdatedAt: timestamp,
-          history: [...base.history.slice(-(MAX_POINTS - 1)), nextHistoryValue],
-          flashing: true,
-        },
+        latestValue: resolvedValue,
+        unit,
+        lastUpdatedAt: timestamp,
+        history: [...previous.history.slice(-(MAX_POINTS - 1)), nextHistoryValue],
+        flashing: true,
       };
     });
 
@@ -436,32 +280,26 @@ const Monitor: React.FC = () => {
           ? Number(body.frequencyHz ?? body.value ?? 0) > 0
           : undefined;
 
-      setDeviceCommandState((previous) => ({
+      upsertDeviceCommandState(sensor, (previous) => ({
         ...previous,
-        [sensor.id]: {
-          ...(previous[sensor.id] ?? buildInitialDeviceState(sensor)),
-          valueLabel: sensor.type === 'valve'
-            ? String(body.state ?? resolvedValue)
-            : `${Number(body.frequencyHz ?? resolvedValue ?? 38).toFixed(1)} Hz`,
-          runtimeSince: sensor.type === 'pump'
-            ? runningFlag
-              ? previous[sensor.id]?.runtimeSince ?? timestamp
-              : null
-            : previous[sensor.id]?.runtimeSince ?? null,
-          frequencyHz: sensor.type === 'pump'
-            ? Number(body.frequencyHz ?? resolvedValue ?? previous[sensor.id]?.frequencyHz ?? 38)
-            : undefined,
-        },
+        valueLabel: sensor.type === 'valve'
+          ? String(body.state ?? resolvedValue)
+          : `${Number(body.frequencyHz ?? resolvedValue ?? 38).toFixed(1)} Hz`,
+        runtimeSince: sensor.type === 'pump'
+          ? runningFlag
+            ? previous.runtimeSince ?? timestamp
+            : null
+          : previous.runtimeSince ?? null,
+        frequencyHz: sensor.type === 'pump'
+          ? Number(body.frequencyHz ?? resolvedValue ?? previous.frequencyHz ?? 38)
+          : undefined,
       }));
     }
 
     window.setTimeout(() => {
-      setSensorStateMap((previous) => ({
+      upsertSensorRuntime(sensor, (previous) => ({
         ...previous,
-        [sensor.id]: {
-          ...(previous[sensor.id] ?? buildInitialSensorState(sensor)),
-          flashing: false,
-        },
+        flashing: false,
       }));
     }, 1000);
   };
@@ -494,19 +332,16 @@ const Monitor: React.FC = () => {
     });
 
     if (sensor) {
-      setDeviceCommandState((previous) => ({
+      upsertDeviceCommandState(sensor, (previous) => ({
         ...previous,
-        [sensor.id]: {
-          ...(previous[sensor.id] ?? buildInitialDeviceState(sensor)),
-          status,
-          lastAction: status === 'ack' ? `${waiter.command} 已确认` : `${waiter.command} 失败`,
-          lastCommandAt: timestamp,
-          runtimeSince: waiter.command.includes('启动') || waiter.command.includes('开启')
-            ? previous[sensor.id]?.runtimeSince ?? timestamp
-            : waiter.command.includes('停止') || waiter.command.includes('关闭')
-              ? null
-              : previous[sensor.id]?.runtimeSince ?? null,
-        },
+        status,
+        lastAction: status === 'ack' ? `${waiter.command} 已确认` : `${waiter.command} 失败`,
+        lastCommandAt: timestamp,
+        runtimeSince: waiter.command.includes('启动') || waiter.command.includes('开启')
+          ? previous.runtimeSince ?? timestamp
+          : waiter.command.includes('停止') || waiter.command.includes('关闭')
+            ? null
+            : previous.runtimeSince ?? null,
       }));
     }
 
@@ -522,12 +357,8 @@ const Monitor: React.FC = () => {
     return () => window.clearInterval(tick);
   }, []);
 
-  useEffect(() => {
-    logsPausedRef.current = logsPaused;
-  }, [logsPaused]);
-
   useMqttStatusListener((nextState) => {
-    updateMqttStatus(nextState, brokerRef.current);
+    setMqttStatus(nextState);
   });
 
   useMqttSubscription(
@@ -546,11 +377,12 @@ const Monitor: React.FC = () => {
     let disposed = false;
 
     const bootstrap = async () => {
+      const activeBroker = useMonitorStore.getState().broker;
       try {
-        await connectMqtt(brokerRef.current);
+        await connectMqtt(activeBroker);
       } catch {
         if (!disposed) {
-          updateMqttStatus('disconnected', brokerRef.current);
+          setMqttStatus('disconnected');
           message.error('MQTT 自动连接失败');
         }
         return;
@@ -598,7 +430,7 @@ const Monitor: React.FC = () => {
     return () => {
       disposed = true;
     };
-  }, [currentSiteId, sensors]);
+  }, [currentSiteId, sensors, setMqttStatus]);
 
   useEffect(() => () => {
     ackWaitersRef.current.forEach((waiter) => window.clearTimeout(waiter.timeoutId));
@@ -669,19 +501,20 @@ const Monitor: React.FC = () => {
   }, [currentSiteId, sensors, simulator]);
 
   const connect = async () => {
-    brokerRef.current = broker.trim() || DEFAULT_BROKER;
-    updateMqttStatus('connecting', broker);
+    const nextBroker = broker.trim() || DEFAULT_BROKER;
+    setBroker(nextBroker);
+    setMqttStatus('connecting');
     try {
-      await connectMqtt(brokerRef.current);
+      await connectMqtt(nextBroker);
     } catch {
-      updateMqttStatus('disconnected', broker);
+      setMqttStatus('disconnected');
       message.error('MQTT 连接失败');
     }
   };
 
   const disconnect = () => {
     disconnectMqtt();
-    updateMqttStatus('disconnected', brokerRef.current);
+    setMqttStatus('disconnected');
   };
 
   const exportLogs = () => {
@@ -704,26 +537,20 @@ const Monitor: React.FC = () => {
     const startedAt = getTimestamp();
     const topic = getCmdTopic(currentSiteId, sensor);
 
-    setDeviceCommandState((previous) => ({
+    upsertDeviceCommandState(sensor, (previous) => ({
       ...previous,
-      [sensor.id]: {
-        ...(previous[sensor.id] ?? buildInitialDeviceState(sensor)),
-        status: 'pending',
-        lastAction: `${command} 发送中`,
-        lastCommandAt: startedAt,
-      },
+      status: 'pending',
+      lastAction: `${command} 发送中`,
+      lastCommandAt: startedAt,
     }));
 
     const timeoutId = window.setTimeout(() => {
       ackWaitersRef.current.delete(msgId);
-      setDeviceCommandState((previous) => ({
+      upsertDeviceCommandState(sensor, (previous) => ({
         ...previous,
-        [sensor.id]: {
-          ...(previous[sensor.id] ?? buildInitialDeviceState(sensor)),
-          status: 'timeout',
-          lastAction: `${command} 超时`,
-          lastCommandAt: getTimestamp(),
-        },
+        status: 'timeout',
+        lastAction: `${command} 超时`,
+        lastCommandAt: getTimestamp(),
       }));
       appendCommandHistory({
         msgId,
@@ -766,14 +593,11 @@ const Monitor: React.FC = () => {
     } catch {
       window.clearTimeout(timeoutId);
       ackWaitersRef.current.delete(msgId);
-      setDeviceCommandState((previous) => ({
+      upsertDeviceCommandState(sensor, (previous) => ({
         ...previous,
-        [sensor.id]: {
-          ...(previous[sensor.id] ?? buildInitialDeviceState(sensor)),
-          status: 'failed',
-          lastAction: `${command} 发送失败`,
-          lastCommandAt: getTimestamp(),
-        },
+        status: 'failed',
+        lastAction: `${command} 发送失败`,
+        lastCommandAt: getTimestamp(),
       }));
       appendCommandHistory({
         msgId,
@@ -911,7 +735,6 @@ const Monitor: React.FC = () => {
             value={broker}
             onChange={(event) => {
               const nextBroker = event.target.value;
-              brokerRef.current = nextBroker;
               setBroker(nextBroker);
             }}
             placeholder="请输入 Broker 地址"
@@ -954,7 +777,7 @@ const Monitor: React.FC = () => {
             </div>
             <div className="monitor-sensor-grid">
               {sensors.map((sensor) => {
-                const runtime = sensorStateMap[sensor.id] ?? buildInitialSensorState(sensor);
+                const runtime = sensorStateMap[sensor.id] ?? buildInitialSensorRuntime(sensor);
                 const online = runtime.lastUpdatedAt ? nowTick - runtime.lastUpdatedAt <= FIVE_MINUTES : false;
                 return (
                   <Card
@@ -1005,7 +828,7 @@ const Monitor: React.FC = () => {
                         }))}
                         onChange={(value) => {
                           const sensor = sensors.find((item) => item.id === value);
-                          setSimulator((previous) => ({
+                          updateSimulator((previous) => ({
                             ...previous,
                             sensorId: value,
                             baseValue: sensor ? sensorBaseMap[sensor.type] : previous.baseValue,
@@ -1015,24 +838,24 @@ const Monitor: React.FC = () => {
                       />
                       <InputNumber
                         value={simulator.baseValue}
-                        onChange={(value) => setSimulator((previous) => ({ ...previous, baseValue: Number(value ?? previous.baseValue) }))}
+                        onChange={(value) => updateSimulator((previous) => ({ ...previous, baseValue: Number(value ?? previous.baseValue) }))}
                         addonBefore="基准值"
                       />
                       <InputNumber
                         value={simulator.rangeValue}
-                        onChange={(value) => setSimulator((previous) => ({ ...previous, rangeValue: Number(value ?? previous.rangeValue) }))}
+                        onChange={(value) => updateSimulator((previous) => ({ ...previous, rangeValue: Number(value ?? previous.rangeValue) }))}
                         addonBefore="波动范围"
                       />
                       <InputNumber
                         value={simulator.intervalMs}
                         min={500}
                         step={500}
-                        onChange={(value) => setSimulator((previous) => ({ ...previous, intervalMs: Number(value ?? previous.intervalMs) }))}
+                        onChange={(value) => updateSimulator((previous) => ({ ...previous, intervalMs: Number(value ?? previous.intervalMs) }))}
                         addonBefore="发送间隔"
                         addonAfter="ms"
                       />
                       {simulator.running ? (
-                        <Button icon={<PauseCircleOutlined />} onClick={() => setSimulator((previous) => ({ ...previous, running: false }))}>
+                        <Button icon={<PauseCircleOutlined />} onClick={() => updateSimulator((previous) => ({ ...previous, running: false }))}>
                           停止
                         </Button>
                       ) : (
@@ -1044,7 +867,7 @@ const Monitor: React.FC = () => {
                               message.warning('请选择一个传感器');
                               return;
                             }
-                            setSimulator((previous) => ({ ...previous, running: true }));
+                            updateSimulator((previous) => ({ ...previous, running: true }));
                           }}
                         >
                           开始
@@ -1066,7 +889,7 @@ const Monitor: React.FC = () => {
             </div>
             <div className="monitor-control-grid">
               {controlSensors.map((sensor) => {
-                const state = deviceCommandState[sensor.id] ?? buildInitialDeviceState(sensor);
+                const state = deviceCommandState[sensor.id] ?? buildInitialDeviceCommandState(sensor);
                 const isPending = state.status === 'pending';
                 const statusColor = state.status === 'ack'
                   ? 'green'
@@ -1151,13 +974,10 @@ const Monitor: React.FC = () => {
                             value={state.frequencyHz ?? 38}
                             onChange={(value) => {
                               const nextFrequency = Number(value);
-                              setDeviceCommandState((previous) => ({
+                              upsertDeviceCommandState(sensor, (previous) => ({
                                 ...previous,
-                                [sensor.id]: {
-                                  ...(previous[sensor.id] ?? buildInitialDeviceState(sensor)),
-                                  frequencyHz: nextFrequency,
-                                  valueLabel: `${nextFrequency.toFixed(1)} Hz`,
-                                },
+                                frequencyHz: nextFrequency,
+                                valueLabel: `${nextFrequency.toFixed(1)} Hz`,
                               }));
                             }}
                           />
@@ -1186,7 +1006,7 @@ const Monitor: React.FC = () => {
                   { value: 'timeout', label: '超时' },
                   { value: 'failed', label: '失败' },
                 ]}
-                onChange={(value) => setSelectedHistoryStatus(value as 'all' | CommandStatus)}
+                onChange={(value) => setSelectedHistoryStatus(value as SelectedHistoryStatus)}
               />
             </div>
             <Card bordered={false} className="monitor-history-card">
@@ -1208,13 +1028,13 @@ const Monitor: React.FC = () => {
               <Text>最近 100 条 MQTT 原始消息</Text>
             </div>
             <Space wrap>
-              <Button size="small" icon={<ClearOutlined />} onClick={() => setLogs([])}>
+              <Button size="small" icon={<ClearOutlined />} onClick={() => clearLogs()}>
                 清空
               </Button>
               <Button
                 size="small"
                 icon={logsPaused ? <PlayCircleOutlined /> : <PauseCircleOutlined />}
-                onClick={() => setLogsPaused((value) => !value)}
+                onClick={() => setLogsPaused(!logsPaused)}
               >
                 {logsPaused ? '恢复' : '暂停'}
               </Button>

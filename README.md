@@ -81,6 +81,7 @@
 - 指令下发 -> 等待 ack（10 秒超时）-> 状态回写
 - 原始日志清空/暂停/导出
 - 本地模拟器闭环演示
+- `Monitor` 的高频页面状态已开始迁移到 Zustand，当前日志、消息计数、传感器运行态、设备指令态、模拟器配置与指令历史由 `src/stores/monitorStore.ts` 统一管理；MQTT 订阅、ack 超时和定时器生命周期仍保留在页面层。
 
 默认 Broker：`wss://broker.emqx.io:8084/mqtt`
 
@@ -109,6 +110,7 @@
 - `SiteModal` 已拆为“父级状态编排器 + Step 子组件”结构：基础信息、田块编辑器、决策模式、报警规则分别独立，后续新增字段与交互不再集中堆在一个文件里。
 - 田块编辑器已独立为 `SiteFieldEditorStep`，父组件只保留拖拽、保存和跨步骤状态管理。
 - MQTT 订阅与状态监听已封装为 React Hook，`Dashboard` 与 `Monitor` 不再手动维护订阅清理逻辑。
+- `Monitor` 已引入 Zustand 做第一阶段状态收口，避免日志、设备状态、实时卡片和模拟器配置全部堆在页面局部 `useState` 中。
 - 知识库表格已取消固定右列方案，改为稳定的横向滚动与省略显示，避免列叠压。
 
 ---
@@ -159,6 +161,8 @@ npm run deploy
 ## 关键目录
 
 - `src/pages/`：业务页面
+- `src/stores/monitorStore.ts`：实时监控 Zustand store
+- `src/stores/monitorStore.types.ts`：监控页运行时类型与默认值
 - `src/utils/mqttClient.ts`：MQTT 客户端封装
 - `src/utils/siteStorage.ts`：站点存储（localStorage）
 - `src/types/site.ts`：站点/设备核心类型
