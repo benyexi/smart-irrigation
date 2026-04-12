@@ -5,7 +5,7 @@ import {
   ArrowUpOutlined,
 } from '@ant-design/icons';
 import { Button, Card, Col, Row, Select, Tag, Typography } from 'antd';
-import ReactECharts from '../../components/ECharts/ReactECharts';
+import DeferredEChart from '../../components/ECharts/DeferredEChart';
 import { mockDashboard } from '../../mock';
 import type { Site } from '../../types/site';
 import SiteModal from '../Sites/SiteModal';
@@ -259,14 +259,14 @@ const Dashboard: React.FC = () => {
       <Row gutter={[12, 12]} style={{ marginBottom: 16 }}>
         <Col xs={24} lg={15}>
           <Card title="土壤含水率实时曲线（多深度）" style={{ height: 320 }}>
-            <ReactECharts option={soilChartOption} style={{ height: 240 }} />
+            <DeferredEChart option={soilChartOption} style={{ height: 240 }} />
           </Card>
         </Col>
         <Col xs={24} lg={9}>
           <Card title="植物生理指标" style={{ height: 320 }}>
             <Row>
               <Col span={8}>
-                <ReactECharts
+                <DeferredEChart
                   option={makeGauge(
                     plantPhysiology.sapFlowRate,
                     300,
@@ -280,7 +280,7 @@ const Dashboard: React.FC = () => {
                 </div>
               </Col>
               <Col span={8}>
-                <ReactECharts
+                <DeferredEChart
                   option={makeGauge(
                     Math.round(Math.abs(plantPhysiology.stemDiameterVariation) * 100),
                     100,
@@ -294,7 +294,7 @@ const Dashboard: React.FC = () => {
                 </div>
               </Col>
               <Col span={8}>
-                <ReactECharts
+                <DeferredEChart
                   option={makeGauge(
                     Math.round(plantPhysiology.leafTurgorPressure * 100),
                     200,
@@ -329,7 +329,7 @@ const Dashboard: React.FC = () => {
       </Row>
 
       <Card title={`今日灌溉计划 vs 实际执行（近7天）— ${site?.name ?? '未选择站点'}`}>
-        <ReactECharts option={barChartOption} style={{ height: 220 }} />
+        <DeferredEChart option={barChartOption} style={{ height: 220 }} />
       </Card>
 
       <SiteModal

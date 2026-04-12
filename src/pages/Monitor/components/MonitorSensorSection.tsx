@@ -1,5 +1,5 @@
 import { Card, Tag, Typography } from 'antd';
-import ReactECharts from '../../../components/ECharts/ReactECharts';
+import DeferredEChart from '../../../components/ECharts/DeferredEChart';
 import type { Sensor } from '../../../types/site';
 import {
   buildInitialSensorRuntime,
@@ -66,9 +66,10 @@ const MonitorSensorSection = ({
               <span>{sensor.location || '未填写位置'}</span>
               <span>{formatRelativeTime(runtime.lastUpdatedAt, nowTick)}</span>
             </div>
-            <ReactECharts
+            <DeferredEChart
               option={makeSparklineOption(runtime.history, sensorColorMap[sensor.type])}
               style={{ height: SPARKLINE_HEIGHT }}
+              minHeight={SPARKLINE_HEIGHT}
             />
           </Card>
         );

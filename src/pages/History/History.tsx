@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Row, Col, Card, Select, Button, Table, Typography, DatePicker, Modal, Form, Space, message } from 'antd';
 import { DownloadOutlined, FileTextOutlined } from '@ant-design/icons';
-import ReactECharts from '../../components/ECharts/ReactECharts';
+import DeferredEChart from '../../components/ECharts/DeferredEChart';
 import type { ColumnsType } from 'antd/es/table';
 import { mockHistoryData, mockHistoryTimestamps, metricLabels, mockSites } from '../../mock';
 
@@ -100,7 +100,7 @@ ${tableData.slice(0,20).map(r=>`<tr><td>${r.time}</td>${selectedMetrics.map(m=>`
       </Card>
 
       <Card style={{ marginBottom: 16 }}>
-        <ReactECharts option={chartOption} style={{ height: 300 }} />
+        <DeferredEChart option={chartOption} style={{ height: 300 }} />
       </Card>
 
       <Card>

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Tag } from 'antd';
 import { FullscreenOutlined, FullscreenExitOutlined, ReloadOutlined } from '@ant-design/icons';
-import ReactECharts from '../../components/ECharts/ReactECharts';
+import DeferredEChart from '../../components/ECharts/DeferredEChart';
 import { mockMapSites, mockHistoryData, mockHistoryTimestamps, type MapSite } from '../../mock';
 import './Screen.css';
 
@@ -219,7 +219,7 @@ const Screen: React.FC = () => {
               <span>土壤含水率</span>
               <small>Soil Moisture</small>
             </h3>
-            <ReactECharts key={tick} option={soilOpt} style={{ height: 220 }} />
+            <DeferredEChart key={tick} option={soilOpt} style={{ height: 220 }} />
           </article>
 
           <article className="screen-panel">
@@ -227,7 +227,7 @@ const Screen: React.FC = () => {
               <span>液流速率</span>
               <small>Sap Flow</small>
             </h3>
-            <ReactECharts key={tick + 100} option={flowOpt} style={{ height: 198 }} />
+            <DeferredEChart key={tick + 100} option={flowOpt} style={{ height: 198 }} />
           </article>
         </div>
 
@@ -277,7 +277,7 @@ const Screen: React.FC = () => {
               <span>含水率雷达</span>
               <small>Moisture Radar</small>
             </h3>
-            <ReactECharts key={tick + 200} option={radarOpt} style={{ height: 220 }} />
+            <DeferredEChart key={tick + 200} option={radarOpt} style={{ height: 220 }} />
           </article>
 
           <article className="screen-panel">
@@ -285,7 +285,7 @@ const Screen: React.FC = () => {
               <span>报警分布</span>
               <small>Alert Distribution</small>
             </h3>
-            <ReactECharts key={tick + 300} option={pieOpt} style={{ height: 198 }} />
+            <DeferredEChart key={tick + 300} option={pieOpt} style={{ height: 198 }} />
           </article>
         </div>
       </section>
