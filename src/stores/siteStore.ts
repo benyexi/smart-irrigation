@@ -1,13 +1,7 @@
 import { useEffect } from 'react';
 import { create } from 'zustand';
 import type { Site } from '../types/site';
-import {
-  deleteSite as removeStoredSite,
-  getSiteStorageSnapshot,
-  saveSite as saveStoredSite,
-  setCurrentSiteId as persistCurrentSiteId,
-  subscribeSiteStorage,
-} from '../utils/siteStorage';
+import { localSiteRepository } from '../repositories/siteRepository';
 
 type SiteStore = {
   sites: Site[];
@@ -18,26 +12,26 @@ type SiteStore = {
   deleteSite: (id: string) => void;
 };
 
-const initialSnapshot = getSiteStorageSnapshot();
+const initialSnapshot = localSiteRepository.getSnapshot();
 
 export const useSiteStore = create<SiteStore>((set) => ({
   ...initialSnapshot,
 
-  syncFromStorage: () => set(getSiteStorageSnapshot()),
+  syncFromStorage: () => set(localSiteRepository.getSnapshot()),
 
   setCurrentSite: (id) => {
-    persistCurrentSiteId(id);
-    set(getSiteStorageSnapshot());
+    localSiteRepository.setCurrentSiteId(id);
+    set(localSiteRepository.getSnapshot());
   },
 
   saveSite: (site) => {
-    saveStoredSite(site);
-    set(getSiteStorageSnapshot());
+    localSiteRepository.saveSite(site);
+    set(localSiteRepository.getSnapshot());
   },
 
   deleteSite: (id) => {
-    removeStoredSite(id);
-    set(getSiteStorageSnapshot());
+    localSiteRepository.deleteSite(id);
+    set(localSiteRepository.getSnapshot());
   },
 }));
 
@@ -46,6 +40,6 @@ export const useSyncSiteStore = () => {
 
   useEffect(() => {
     syncFromStorage();
-    return subscribeSiteStorage(syncFromStorage);
+    return localSiteRepository.subscribe(syncFromStorage);
   }, [syncFromStorage]);
 };

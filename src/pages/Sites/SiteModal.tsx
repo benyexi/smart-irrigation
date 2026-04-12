@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Input, InputNumber, Modal, Select, Space, Steps, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { plantRecommendations } from '../../mock/knowledge';
+import { useSiteStore } from '../../stores/siteStore';
 import type { AlarmRule, ModeParams, Pipeline, Sensor, Site } from '../../types/site';
-import { saveSite } from '../../utils/siteStorage';
 import SiteAlarmRulesStep from './components/SiteAlarmRulesStep';
 import SiteBasicInfoStep, { type SiteBasicInfoStepValue } from './components/SiteBasicInfoStep';
 import SiteDecisionModeStep from './components/SiteDecisionModeStep';
@@ -91,6 +91,7 @@ const SiteModal: React.FC<SiteModalProps> = ({
   onCancel,
   onSaved,
 }) => {
+  const persistSite = useSiteStore((state) => state.saveSite);
   const [step, setStep] = useState(0);
   const [basic, setBasic] = useState<BasicState>(defaultBasicState);
   const [sensors, setSensors] = useState<Sensor[]>([]);
@@ -580,7 +581,7 @@ const SiteModal: React.FC<SiteModalProps> = ({
       updatedAt: now,
     };
 
-    saveSite(nextSite);
+    persistSite(nextSite);
     message.success('站点保存成功！');
     onSaved(nextSite);
   };
