@@ -127,6 +127,7 @@
 - `History / Alerts / HistoryReportModal` 已移除 Ant Design `DatePicker`，改用原生日期输入封装的 `LiteDateRange`，构建产物中的 `date-picker` 重块已被消除。
 - `Alerts` 表格、`IoT` Topic 规范表格、`Monitor` 指令历史表格都已继续改为按需异步加载，不再作为对应页面的首屏静态依赖。
 - `Knowledge` 三个 Tab 的表格和 `Engine` 决策日志表也已拆成独立异步块，只有进入对应内容时才加载 `Table` 依赖。
+- `History / Alerts / IoT / Engine / Monitor` 的简单表格已改用自研 `LiteTable`，当前只在 `Knowledge` 与 `SiteModal` 这类仍需要重表格能力的区域保留 Ant Design Table。
 - 知识库表格已取消固定右列方案，改为稳定的横向滚动与省略显示，避免列叠压。
 
 ---
@@ -184,6 +185,7 @@ npm run deploy
 - `src/components/ECharts/DeferredEChart.tsx`：图表延迟加载包装组件
 - `src/components/ECharts/ReactECharts.tsx`：ECharts 按需注册包装组件
 - `src/components/Inputs/LiteDateRange.tsx`：轻量日期区间输入组件，替代重型日期选择器
+- `src/components/Tables/LiteTable.tsx`：轻量表格组件，用于替代简单展示型表格
 - `src/pages/Alerts/components/AlertsTableSection.tsx`：报警页表格区块，按需异步加载
 - `src/pages/Engine/components/EngineLogTable.tsx`：决策引擎日志表，按需异步加载
 - `src/pages/History/components/`：历史页表格与报告弹窗的异步子组件

@@ -1,6 +1,6 @@
-import { Table, Tag, Button } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
+import { Tag, Button } from 'antd';
 import { CheckOutlined } from '@ant-design/icons';
+import LiteTable, { type LiteTableColumn } from '../../../components/Tables/LiteTable';
 import type { Alert } from '../../../mock';
 
 const levelColor: Record<string, string> = {
@@ -29,7 +29,7 @@ interface AlertsTableSectionProps {
 }
 
 const AlertsTableSection = ({ alerts, onMarkHandled }: AlertsTableSectionProps) => {
-  const columns: ColumnsType<Alert> = [
+  const columns: LiteTableColumn<Alert>[] = [
     { title: '时间', dataIndex: 'time', key: 'time', width: 160 },
     { title: '站点', dataIndex: 'site', key: 'site', width: 180, ellipsis: true },
     {
@@ -37,14 +37,20 @@ const AlertsTableSection = ({ alerts, onMarkHandled }: AlertsTableSectionProps) 
       dataIndex: 'type',
       key: 'type',
       width: 90,
-      render: (value: string) => <Tag color={typeColor[value] ?? 'default'}>{value}</Tag>,
+      render: (value) => {
+        const text = String(value ?? '--');
+        return <Tag color={typeColor[text] ?? 'default'}>{text}</Tag>;
+      },
     },
     {
       title: '级别',
       dataIndex: 'level',
       key: 'level',
       width: 80,
-      render: (value: string) => <Tag color={levelColor[value]}>{levelText[value]}</Tag>,
+      render: (value) => {
+        const text = String(value ?? '');
+        return <Tag color={levelColor[text]}>{levelText[text]}</Tag>;
+      },
     },
     { title: '报警内容', dataIndex: 'content', key: 'content', ellipsis: true },
     {
@@ -52,7 +58,10 @@ const AlertsTableSection = ({ alerts, onMarkHandled }: AlertsTableSectionProps) 
       dataIndex: 'status',
       key: 'status',
       width: 90,
-      render: (value: string) => <Tag color={value === '未处理' ? 'red' : 'green'}>{value}</Tag>,
+      render: (value) => {
+        const text = String(value ?? '--');
+        return <Tag color={text === '未处理' ? 'red' : 'green'}>{text}</Tag>;
+      },
     },
     {
       title: '操作',
@@ -75,14 +84,12 @@ const AlertsTableSection = ({ alerts, onMarkHandled }: AlertsTableSectionProps) 
   ];
 
   return (
-    <Table
+    <LiteTable
       columns={columns}
       dataSource={alerts}
       rowKey="id"
-      size="small"
-      pagination={{ pageSize: 10 }}
-      scroll={{ x: 900 }}
-      rowClassName={(record) => (record.level === 'error' ? 'ant-table-row-error' : '')}
+      pageSize={10}
+      scrollX={900}
     />
   );
 };

@@ -1,5 +1,5 @@
-import { Card, Select, Table, Tag, Typography } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
+import { Card, Select, Tag, Typography } from 'antd';
+import LiteTable, { type LiteTableColumn } from '../../../components/Tables/LiteTable';
 import type {
   CommandEntry,
   CommandStatus,
@@ -8,13 +8,12 @@ import type {
 
 const { Title, Text } = Typography;
 
-const commandColumns: ColumnsType<CommandEntry> = [
+const commandColumns: LiteTableColumn<CommandEntry>[] = [
   {
     title: '时间',
-    dataIndex: 'timestamp',
     key: 'timestamp',
     width: 170,
-    render: (timestamp: number) => new Date(timestamp).toLocaleString('zh-CN'),
+    render: (_, record) => new Date(record.timestamp).toLocaleString('zh-CN'),
   },
   {
     title: '设备',
@@ -33,7 +32,8 @@ const commandColumns: ColumnsType<CommandEntry> = [
     dataIndex: 'status',
     key: 'status',
     width: 110,
-    render: (status: CommandStatus) => {
+    render: (value) => {
+      const status = value as CommandStatus;
       const color =
         status === 'ack'
           ? 'green'
@@ -58,7 +58,7 @@ const commandColumns: ColumnsType<CommandEntry> = [
     dataIndex: 'latencyMs',
     key: 'latencyMs',
     width: 120,
-    render: (latencyMs?: number) => (latencyMs ? `${latencyMs} ms` : '--'),
+    render: (value) => (typeof value === 'number' && value > 0 ? `${value} ms` : '--'),
   },
 ];
 
@@ -93,12 +93,12 @@ const MonitorCommandHistorySection = ({
       />
     </div>
     <Card bordered={false} className="monitor-history-card">
-      <Table
-        size="small"
-        rowKey="id"
+      <LiteTable
         columns={commandColumns}
         dataSource={filteredCommandHistory}
-        pagination={{ pageSize: 6, hideOnSinglePage: true }}
+        rowKey="id"
+        pageSize={6}
+        hideOnSinglePage
       />
     </Card>
   </section>

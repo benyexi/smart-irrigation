@@ -1,5 +1,5 @@
-import { Card, Table, Tag } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
+import { Card, Tag } from 'antd';
+import LiteTable, { type LiteTableColumn } from '../../../components/Tables/LiteTable';
 
 interface DecisionLog {
   key: number;
@@ -17,7 +17,7 @@ interface EngineLogTableProps {
 }
 
 const EngineLogTable = ({ logs }: EngineLogTableProps) => {
-  const logColumns: ColumnsType<DecisionLog> = [
+  const logColumns: LiteTableColumn<DecisionLog>[] = [
     { title: '时间', dataIndex: 'time', key: 'time', width: 100 },
     { title: '决策模式', dataIndex: 'mode', key: 'mode', width: 140 },
     { title: '输入摘要', dataIndex: 'input', key: 'input' },
@@ -26,7 +26,9 @@ const EngineLogTable = ({ logs }: EngineLogTableProps) => {
       dataIndex: 'result',
       key: 'result',
       width: 100,
-      render: (value, record) => <Tag color={record.status === 'irrigate' ? 'success' : 'default'}>{value}</Tag>,
+      render: (value, record) => (
+        <Tag color={record.status === 'irrigate' ? 'success' : 'default'}>{String(value ?? '--')}</Tag>
+      ),
     },
     { title: '灌水量(m³)', dataIndex: 'volume', key: 'volume', width: 110 },
     { title: '时长(min)', dataIndex: 'duration', key: 'duration', width: 90 },
@@ -34,12 +36,12 @@ const EngineLogTable = ({ logs }: EngineLogTableProps) => {
 
   return (
     <Card title={`决策日志（${logs.length} 条）`}>
-      <Table
+      <LiteTable
         columns={logColumns}
         dataSource={logs}
-        size="small"
-        pagination={{ pageSize: 8 }}
-        locale={{ emptyText: '暂无决策记录' }}
+        rowKey="key"
+        pageSize={8}
+        emptyText="暂无决策记录"
       />
     </Card>
   );

@@ -1,6 +1,7 @@
-import { Card, Table } from 'antd';
+import { Card } from 'antd';
+import LiteTable, { type LiteTableColumn } from '../../../components/Tables/LiteTable';
 
-const topicColumns = [
+const topicColumns: LiteTableColumn<(typeof topicRows)[number]>[] = [
   { title: 'Topic', dataIndex: 'topic', key: 'topic', width: 380 },
   { title: '方向', dataIndex: 'direction', key: 'direction', width: 88 },
   { title: 'QoS', dataIndex: 'qos', key: 'qos', width: 80 },
@@ -14,7 +15,7 @@ const topicRows = [
   { key: 'status', topic: 'siz/v1/{siteId}/status', direction: '设备→平台', qos: '0/1', note: '设备心跳与在线状态' },
 ];
 
-const sensorTypeColumns = [
+const sensorTypeColumns: LiteTableColumn<(typeof sensorTypeRows)[number]>[] = [
   { title: '枚举值', dataIndex: 'value', key: 'value', width: 180 },
   { title: '中文含义', dataIndex: 'label', key: 'label', width: 180 },
   { title: '建议上报字段', dataIndex: 'field', key: 'field' },
@@ -41,12 +42,12 @@ const IoTTopicTables = () => (
           <div className="iot-table-subtitle">推荐按站点维度组织主题，便于分区、授权和设备联动。</div>
         </div>
       </div>
-      <Table
+      <LiteTable
         className="iot-table"
-        size="small"
-        pagination={false}
         columns={topicColumns}
         dataSource={topicRows}
+        rowKey="key"
+        scrollX={720}
       />
     </Card>
 
@@ -57,12 +58,12 @@ const IoTTopicTables = () => (
           <div className="iot-table-subtitle">`type` 建议作为统一归类字段，便于平台侧映射指标卡片与规则引擎。</div>
         </div>
       </div>
-      <Table
+      <LiteTable
         className="iot-table"
-        size="small"
-        pagination={false}
         columns={sensorTypeColumns}
         dataSource={sensorTypeRows}
+        rowKey="key"
+        scrollX={720}
       />
     </Card>
   </div>

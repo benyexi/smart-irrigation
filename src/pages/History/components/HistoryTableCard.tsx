@@ -1,21 +1,21 @@
-import { Card, Table } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
+import { Card } from 'antd';
+import LiteTable, { type LiteTableColumn } from '../../../components/Tables/LiteTable';
 
 type HistoryTableRow = Record<string, string | number>;
 
 interface HistoryTableCardProps {
-  columns: ColumnsType<HistoryTableRow>;
+  columns: LiteTableColumn<HistoryTableRow>[];
   dataSource: HistoryTableRow[];
 }
 
 const HistoryTableCard = ({ columns, dataSource }: HistoryTableCardProps) => (
   <Card>
-    <Table
+    <LiteTable
       columns={columns}
       dataSource={dataSource}
-      size="small"
-      pagination={{ pageSize: 20 }}
-      scroll={{ x: 800 }}
+      rowKey="key"
+      pageSize={20}
+      scrollX={800}
     />
   </Card>
 );

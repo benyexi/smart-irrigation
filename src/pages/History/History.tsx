@@ -3,7 +3,7 @@ import { Row, Col, Card, Select, Button, Typography, Space, Skeleton, message } 
 import { DownloadOutlined, FileTextOutlined } from '@ant-design/icons';
 import DeferredEChart from '../../components/ECharts/DeferredEChart';
 import LiteDateRange from '../../components/Inputs/LiteDateRange';
-import type { ColumnsType } from 'antd/es/table';
+import type { LiteTableColumn } from '../../components/Tables/LiteTable';
 import { mockHistoryData, mockHistoryTimestamps, metricLabels, mockSites } from '../../mock';
 
 const { Title } = Typography;
@@ -47,8 +47,8 @@ const History: React.FC = () => {
     return row;
   });
 
-  const columns: ColumnsType<Record<string, string | number>> = [
-    { title: '时间', dataIndex: 'time', key: 'time', width: 160, fixed: 'left' },
+  const columns: LiteTableColumn<Record<string, string | number>>[] = [
+    { title: '时间', dataIndex: 'time', key: 'time', width: 160 },
     ...selectedMetrics.map(m => ({ title: metricLabels[m] ?? m, dataIndex: m, key: m, width: 140 })),
   ];
 
