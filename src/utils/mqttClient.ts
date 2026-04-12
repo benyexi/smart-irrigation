@@ -16,11 +16,15 @@ type SubscribeOptions = {
   autoConnect?: boolean;
 };
 
+type BrowserMqttModule = {
+  connect: (brokerUrl: string, options?: IClientOptions) => MqttClient;
+};
+
 type HandlerSet = Set<MqttHandler>;
 
 const topicHandlers = new Map<string, HandlerSet>();
 const statusListeners = new Set<(status: MqttStatus) => void>();
-let mqttModulePromise: Promise<typeof import('mqtt')> | null = null;
+let mqttModulePromise: Promise<BrowserMqttModule> | null = null;
 
 let client: MqttClient | null = null;
 let status: MqttStatus = 'disconnected';
@@ -80,9 +84,65 @@ const createMessage = (topic: string, payload: unknown): MqttMessage => {
 
 const normalizeTopic = (value: string): string => value.trim();
 
+const getBrowserMqttGlobal = (): BrowserMqttModule | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  const mqttGlobal = (window as Window & { mqtt?: BrowserMqttModule }).mqtt;
+  return mqttGlobal && typeof mqttGlobal.connect === 'function' ? mqttGlobal : null;
+};
+
+const loadMqttScript = async (): Promise<BrowserMqttModule> => {
+  const existing = getBrowserMqttGlobal();
+  if (existing) {
+    return existing;
+  }
+
+  if (typeof document === 'undefined') {
+    throw new Error('MQTT runtime is only available in the browser.');
+  }
+
+  const scriptId = 'siz-mqtt-runtime';
+  const current = document.getElementById(scriptId) as HTMLScriptElement | null;
+  if (current) {
+    await new Promise<void>((resolve, reject) => {
+      if (getBrowserMqttGlobal()) {
+        resolve();
+        return;
+      }
+
+      current.addEventListener('load', () => resolve(), { once: true });
+      current.addEventListener('error', () => reject(new Error('Failed to load MQTT runtime.')), { once: true });
+    });
+    const loaded = getBrowserMqttGlobal();
+    if (loaded) {
+      return loaded;
+    }
+    throw new Error('MQTT runtime did not initialize correctly.');
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    const script = document.createElement('script');
+    script.id = scriptId;
+    script.async = true;
+    script.src = `${import.meta.env.BASE_URL}mqtt.min.js`;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Failed to load MQTT runtime.'));
+    document.head.appendChild(script);
+  });
+
+  const loaded = getBrowserMqttGlobal();
+  if (!loaded) {
+    throw new Error('MQTT runtime did not initialize correctly.');
+  }
+
+  return loaded;
+};
+
 const loadMqttModule = async () => {
   if (!mqttModulePromise) {
-    mqttModulePromise = import('mqtt');
+    mqttModulePromise = loadMqttScript();
   }
 
   return mqttModulePromise;
