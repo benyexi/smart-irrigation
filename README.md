@@ -185,7 +185,7 @@ npm run deploy
 - `src/stores/siteStore.ts`：站点列表与当前站点的统一运行时 store
 - `src/repositories/siteRepository.ts`：站点数据访问抽象层，当前实现落到 localStorage
 - `src/components/ECharts/DeferredEChart.tsx`：图表延迟加载包装组件
-- `src/components/ECharts/ReactECharts.tsx`：ECharts 按需注册包装组件
+- `src/components/ECharts/ReactECharts.tsx`：轻量图表包装组件，负责按需注入 ECharts 浏览器运行时并驱动实例
 - `src/components/Inputs/LiteDateRange.tsx`：轻量日期区间输入组件，替代重型日期选择器
 - `src/components/Tables/LiteTable.tsx`：轻量表格组件，现已承接全站业务表格，并支持轻量排序/分页/滚动
 - `public/mqtt.min.js`：MQTT 浏览器运行时脚本，按需动态注入
