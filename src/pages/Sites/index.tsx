@@ -1,13 +1,13 @@
-import React, { useMemo, useState } from 'react';
+import React, { Suspense, lazy, useMemo, useState } from 'react';
 import { AppstoreOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Descriptions, Popconfirm, Row, Space, Tag, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import type { Site } from '../../types/site';
 import { useSiteStore, useSyncSiteStore } from '../../stores/siteStore';
-import SiteModal from './SiteModal';
 import './Sites.css';
 
 const { Title, Text } = Typography;
+const SiteModal = lazy(() => import('./SiteModal'));
 
 const statusColorMap: Record<Site['status'], string> = {
   running: '#1366ff',
@@ -173,14 +173,18 @@ const SitesPage: React.FC = () => {
         ))}
       </Row>
 
-      <SiteModal
-        open={modalOpen}
-        initialSite={editingSite}
-        onCancel={() => setModalOpen(false)}
-        onSaved={() => {
-          setModalOpen(false);
-        }}
-      />
+      {modalOpen ? (
+        <Suspense fallback={null}>
+          <SiteModal
+            open={modalOpen}
+            initialSite={editingSite}
+            onCancel={() => setModalOpen(false)}
+            onSaved={() => {
+              setModalOpen(false);
+            }}
+          />
+        </Suspense>
+      ) : null}
     </div>
   );
 };

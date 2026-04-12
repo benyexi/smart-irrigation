@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import {
   AlertOutlined,
   ArrowDownOutlined,
@@ -8,7 +8,6 @@ import { Button, Card, Col, Row, Select, Tag, Typography } from 'antd';
 import DeferredEChart from '../../components/ECharts/DeferredEChart';
 import { mockDashboard } from '../../mock';
 import type { Site } from '../../types/site';
-import SiteModal from '../Sites/SiteModal';
 import {
   barChartOption,
   makeGauge,
@@ -18,6 +17,7 @@ import {
 import { useDashboardRuntime } from './useDashboardRuntime';
 
 const { Text } = Typography;
+const SiteModal = lazy(() => import('../Sites/SiteModal'));
 
 const Dashboard: React.FC = () => {
   const [siteModalOpen, setSiteModalOpen] = useState(false);
@@ -332,15 +332,19 @@ const Dashboard: React.FC = () => {
         <DeferredEChart option={barChartOption} style={{ height: 220 }} />
       </Card>
 
-      <SiteModal
-        open={siteModalOpen}
-        initialSite={site ?? null}
-        onCancel={() => setSiteModalOpen(false)}
-        onSaved={(savedSite: Site) => {
-          setSiteModalOpen(false);
-          handleSiteSaved(savedSite);
-        }}
-      />
+      {siteModalOpen ? (
+        <Suspense fallback={null}>
+          <SiteModal
+            open={siteModalOpen}
+            initialSite={site ?? null}
+            onCancel={() => setSiteModalOpen(false)}
+            onSaved={(savedSite: Site) => {
+              setSiteModalOpen(false);
+              handleSiteSaved(savedSite);
+            }}
+          />
+        </Suspense>
+      ) : null}
     </div>
   );
 };
