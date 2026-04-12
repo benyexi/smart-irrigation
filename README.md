@@ -122,6 +122,7 @@
 - `mqttClient.ts` 已改为运行时动态加载 `mqtt` 库，未进入监控链路或未发起连接前，不再预先拉取 MQTT 浏览器依赖。
 - `DeferredEChart` 已接入 Dashboard / History / Monitor / Screen，页面框架会先渲染，图表随后异步挂载，降低图表初始化对首屏可见内容的阻塞。
 - `SiteModal` 已改成在 Dashboard / Sites 中按需懒加载，进入页面时不再把站点配置大弹窗作为静态首依赖一起拉取。
+- `History` 页已进一步拆成主页面、数据表格组件、报告弹窗组件三段，表格和报告生成逻辑改为独立异步块。
 - 知识库表格已取消固定右列方案，改为稳定的横向滚动与省略显示，避免列叠压。
 
 ---
@@ -178,6 +179,7 @@ npm run deploy
 - `src/repositories/siteRepository.ts`：站点数据访问抽象层，当前实现落到 localStorage
 - `src/components/ECharts/DeferredEChart.tsx`：图表延迟加载包装组件
 - `src/components/ECharts/ReactECharts.tsx`：ECharts 按需注册包装组件
+- `src/pages/History/components/`：历史页表格与报告弹窗的异步子组件
 - `src/pages/Monitor/components/`：监控页各独立面板组件
 - `src/pages/Monitor/monitorViewShared.ts`：监控页视图层格式化与共享常量
 - `src/pages/Monitor/useMonitorRuntime.ts`：监控页运行时 Hook（MQTT/ack/模拟器/指令链路）

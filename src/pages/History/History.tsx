@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Row, Col, Card, Select, Button, Table, Typography, DatePicker, Modal, Form, Space, message } from 'antd';
+import React, { Suspense, lazy, useMemo, useState } from 'react';
+import { Row, Col, Card, Select, Button, Typography, DatePicker, Space, Skeleton, message } from 'antd';
 import { DownloadOutlined, FileTextOutlined } from '@ant-design/icons';
 import DeferredEChart from '../../components/ECharts/DeferredEChart';
 import type { ColumnsType } from 'antd/es/table';
@@ -7,6 +7,8 @@ import { mockHistoryData, mockHistoryTimestamps, metricLabels, mockSites } from 
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
+const HistoryTableCard = lazy(() => import('./components/HistoryTableCard'));
+const HistoryReportModal = lazy(() => import('./components/HistoryReportModal'));
 
 const metrics = Object.keys(metricLabels);
 const colorMap: Record<string, string> = {
@@ -103,18 +105,21 @@ ${tableData.slice(0,20).map(r=>`<tr><td>${r.time}</td>${selectedMetrics.map(m=>`
         <DeferredEChart option={chartOption} style={{ height: 300 }} />
       </Card>
 
-      <Card>
-        <Table columns={columns} dataSource={tableData} size="small" pagination={{ pageSize: 20 }} scroll={{ x: 800 }} />
-      </Card>
+      <Suspense fallback={<Card><Skeleton active paragraph={{ rows: 6 }} title={false} /></Card>}>
+        <HistoryTableCard columns={columns} dataSource={tableData} />
+      </Suspense>
 
-      <Modal title="生成灌溉报告" open={reportModal} onCancel={() => setReportModal(false)}
-        footer={[<Button key="cancel" onClick={() => setReportModal(false)}>取消</Button>, <Button key="gen" type="primary" loading={generating} onClick={generateReport}>生成并下载</Button>]}>
-        <Form layout="vertical" style={{ marginTop: 16 }}>
-          <Form.Item label="报告类型"><Select defaultValue="daily" options={[{value:'daily',label:'日报'},{value:'weekly',label:'周报'},{value:'monthly',label:'月报'}]} /></Form.Item>
-          <Form.Item label="站点"><Select defaultValue="site001" options={mockSites.map(s=>({value:s.id,label:s.name}))} /></Form.Item>
-          <Form.Item label="时间范围"><RangePicker style={{ width: '100%' }} /></Form.Item>
-        </Form>
-      </Modal>
+      {reportModal ? (
+        <Suspense fallback={null}>
+          <HistoryReportModal
+            open={reportModal}
+            generating={generating}
+            siteOptions={mockSites.map((site) => ({ value: site.id, label: site.name }))}
+            onCancel={() => setReportModal(false)}
+            onGenerate={generateReport}
+          />
+        </Suspense>
+      ) : null}
     </div>
   );
 };
