@@ -124,6 +124,7 @@
 - `SiteModal` 已改成在 Dashboard / Sites 中按需懒加载，进入页面时不再把站点配置大弹窗作为静态首依赖一起拉取。
 - `History` 页已进一步拆成主页面、数据表格组件、报告弹窗组件三段，表格和报告生成逻辑改为独立异步块。
 - `History / Alerts / HistoryReportModal` 已移除 Ant Design `DatePicker`，改用原生日期输入封装的 `LiteDateRange`，构建产物中的 `date-picker` 重块已被消除。
+- `Alerts` 表格、`IoT` Topic 规范表格、`Monitor` 指令历史表格都已继续改为按需异步加载，不再作为对应页面的首屏静态依赖。
 - 知识库表格已取消固定右列方案，改为稳定的横向滚动与省略显示，避免列叠压。
 
 ---
@@ -181,7 +182,9 @@ npm run deploy
 - `src/components/ECharts/DeferredEChart.tsx`：图表延迟加载包装组件
 - `src/components/ECharts/ReactECharts.tsx`：ECharts 按需注册包装组件
 - `src/components/Inputs/LiteDateRange.tsx`：轻量日期区间输入组件，替代重型日期选择器
+- `src/pages/Alerts/components/AlertsTableSection.tsx`：报警页表格区块，按需异步加载
 - `src/pages/History/components/`：历史页表格与报告弹窗的异步子组件
+- `src/pages/IoT/components/IoTTopicTables.tsx`：IoT Topic 规范表格区块，按需异步加载
 - `src/pages/Monitor/components/`：监控页各独立面板组件
 - `src/pages/Monitor/monitorViewShared.ts`：监控页视图层格式化与共享常量
 - `src/pages/Monitor/useMonitorRuntime.ts`：监控页运行时 Hook（MQTT/ack/模拟器/指令链路）

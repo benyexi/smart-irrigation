@@ -1,34 +1,13 @@
 // Alerts page — unresolved / resolved tabs, mark as handled
-import React, { useState } from 'react';
+import React, { Suspense, lazy, useMemo, useState } from 'react';
 import {
-  Card, Table, Tag, Button, Tabs, Row, Col, Typography, message, Space,
+  Card, Tag, Tabs, Row, Col, Typography, message, Space, Skeleton,
 } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { CheckOutlined } from '@ant-design/icons';
 import LiteDateRange from '../../components/Inputs/LiteDateRange';
 import { mockAlerts, type Alert } from '../../mock';
 
 const { Title } = Typography;
-
-const levelColor: Record<string, string> = {
-  error: 'red',
-  warning: 'orange',
-  info: 'blue',
-};
-
-const levelText: Record<string, string> = {
-  error: '严重',
-  warning: '警告',
-  info: '提示',
-};
-
-const typeColor: Record<string, string> = {
-  '土壤水分': 'green',
-  '植物水分': 'lime',
-  '土壤水势': 'cyan',
-  '传感器': 'blue',
-  '设备': 'orange',
-};
+const AlertsTableSection = lazy(() => import('./components/AlertsTableSection'));
 
 const Alerts: React.FC = () => {
   const [alerts, setAlerts] = useState<Alert[]>(mockAlerts);
@@ -41,55 +20,8 @@ const Alerts: React.FC = () => {
     message.success('已标记为处理完成');
   };
 
-  const columns: ColumnsType<Alert> = [
-    { title: '时间', dataIndex: 'time', key: 'time', width: 160 },
-    { title: '站点', dataIndex: 'site', key: 'site', width: 180, ellipsis: true },
-    {
-      title: '类型',
-      dataIndex: 'type',
-      key: 'type',
-      width: 90,
-      render: (v: string) => <Tag color={typeColor[v] ?? 'default'}>{v}</Tag>,
-    },
-    {
-      title: '级别',
-      dataIndex: 'level',
-      key: 'level',
-      width: 80,
-      render: (v: string) => <Tag color={levelColor[v]}>{levelText[v]}</Tag>,
-    },
-    { title: '报警内容', dataIndex: 'content', key: 'content', ellipsis: true },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: 90,
-      render: (v: string) => (
-        <Tag color={v === '未处理' ? 'red' : 'green'}>{v}</Tag>
-      ),
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: 100,
-      render: (_, r) =>
-        r.status === '未处理' ? (
-          <Button
-            size="small"
-            type="primary"
-            icon={<CheckOutlined />}
-            onClick={() => markHandled(r.id)}
-          >
-            标记处理
-          </Button>
-        ) : (
-          <Tag color="green">已完成</Tag>
-        ),
-    },
-  ];
-
-  const unresolved = alerts.filter((a) => a.status === '未处理');
-  const resolved = alerts.filter((a) => a.status === '已处理');
+  const unresolved = useMemo(() => alerts.filter((a) => a.status === '未处理'), [alerts]);
+  const resolved = useMemo(() => alerts.filter((a) => a.status === '已处理'), [alerts]);
 
   return (
     <div className="page-container">
@@ -118,29 +50,18 @@ const Alerts: React.FC = () => {
               key: 'unresolved',
               label: `未处理 (${unresolved.length})`,
               children: (
-                <Table
-                  columns={columns}
-                  dataSource={unresolved}
-                  rowKey="id"
-                  size="small"
-                  pagination={{ pageSize: 10 }}
-                  scroll={{ x: 900 }}
-                  rowClassName={(r) => r.level === 'error' ? 'ant-table-row-error' : ''}
-                />
+                <Suspense fallback={<Skeleton active paragraph={{ rows: 6 }} title={false} />}>
+                  <AlertsTableSection alerts={unresolved} onMarkHandled={markHandled} />
+                </Suspense>
               ),
             },
             {
               key: 'resolved',
               label: `已处理 (${resolved.length})`,
               children: (
-                <Table
-                  columns={columns}
-                  dataSource={resolved}
-                  rowKey="id"
-                  size="small"
-                  pagination={{ pageSize: 10 }}
-                  scroll={{ x: 900 }}
-                />
+                <Suspense fallback={<Skeleton active paragraph={{ rows: 6 }} title={false} />}>
+                  <AlertsTableSection alerts={resolved} onMarkHandled={markHandled} />
+                </Suspense>
               ),
             },
           ]}

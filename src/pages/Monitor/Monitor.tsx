@@ -1,9 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { Suspense, lazy, useMemo } from 'react';
 import { message } from 'antd';
 import type { Site } from '../../types/site';
 import { sensorBaseMap, sensorRangeMap } from '../../stores/monitorStore';
 import { useSiteStore, useSyncSiteStore } from '../../stores/siteStore';
-import MonitorCommandHistorySection from './components/MonitorCommandHistorySection';
 import MonitorControlSection from './components/MonitorControlSection';
 import MonitorLogPanel from './components/MonitorLogPanel';
 import MonitorSensorSection from './components/MonitorSensorSection';
@@ -12,6 +11,10 @@ import MonitorTopbar from './components/MonitorTopbar';
 import { sensorSortWeight } from './monitorViewShared';
 import { useMonitorRuntime } from './useMonitorRuntime';
 import './Monitor.css';
+
+const MonitorCommandHistorySection = lazy(
+  () => import('./components/MonitorCommandHistorySection'),
+);
 
 const Monitor: React.FC = () => {
   useSyncSiteStore();
@@ -90,11 +93,13 @@ const Monitor: React.FC = () => {
             onUpdatePumpFrequency={runtime.updatePumpFrequency}
           />
 
-          <MonitorCommandHistorySection
-            filteredCommandHistory={runtime.filteredCommandHistory}
-            selectedHistoryStatus={runtime.selectedHistoryStatus}
-            onStatusChange={runtime.setSelectedHistoryStatus}
-          />
+          <Suspense fallback={null}>
+            <MonitorCommandHistorySection
+              filteredCommandHistory={runtime.filteredCommandHistory}
+              selectedHistoryStatus={runtime.selectedHistoryStatus}
+              onStatusChange={runtime.setSelectedHistoryStatus}
+            />
+          </Suspense>
         </main>
 
         <MonitorLogPanel
